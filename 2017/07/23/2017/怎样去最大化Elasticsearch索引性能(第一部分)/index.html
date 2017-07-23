@@ -1,0 +1,771 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Elasticsearch," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="本文是How to Maximize Elasticsearch Indexing Performance (Part 1)的翻译版本 这是关于调优 Elasticsearch 索引三部分的第一部分。 这一系列的重点是调优Elasticsearch以达到最大的索引吞吐量并减少监控和管理负荷。 首先，假设你已经开始使用Elasticsearch，创建索引，没有引入框架来填充JSON文档。Elasti">
+<meta name="keywords" content="Elasticsearch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="怎样去最大化Elasticsearch索引性能(第一部分)">
+<meta property="og:url" content="http://geekcat.me/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/index.html">
+<meta property="og:site_name" content="GeekCat的脑窝">
+<meta property="og:description" content="本文是How to Maximize Elasticsearch Indexing Performance (Part 1)的翻译版本 这是关于调优 Elasticsearch 索引三部分的第一部分。 这一系列的重点是调优Elasticsearch以达到最大的索引吞吐量并减少监控和管理负荷。 首先，假设你已经开始使用Elasticsearch，创建索引，没有引入框架来填充JSON文档。Elasti">
+<meta property="og:updated_time" content="2017-07-23T05:03:57.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="怎样去最大化Elasticsearch索引性能(第一部分)">
+<meta name="twitter:description" content="本文是How to Maximize Elasticsearch Indexing Performance (Part 1)的翻译版本 这是关于调优 Elasticsearch 索引三部分的第一部分。 这一系列的重点是调优Elasticsearch以达到最大的索引吞吐量并减少监控和管理负荷。 首先，假设你已经开始使用Elasticsearch，创建索引，没有引入框架来填充JSON文档。Elasti">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://geekcat.me/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/"/>
+
+
+
+
+
+  <title> 怎样去最大化Elasticsearch索引性能(第一部分) | GeekCat的脑窝 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">GeekCat的脑窝</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle">Gakki 就是正义</p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://geekcat.me/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="geekcat">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/user.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="GeekCat的脑窝">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="GeekCat的脑窝" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                怎样去最大化Elasticsearch索引性能(第一部分)
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-07-23T01:20:36+08:00">
+                2017-07-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文是<a href="https://qbox.io/blog/maximize-guide-elasticsearch-indexing-performance-part-1" target="_blank" rel="external">How to Maximize Elasticsearch Indexing Performance (Part 1)</a>的翻译版本</p>
+<p>这是关于调优<strong> Elasticsearch 索引</strong>三部分的第一部分。 这一系列的重点是调优Elasticsearch以达到最大的索引吞吐量并减少监控和管理负荷。</p>
+<p>首先，假设你已经开始使用Elasticsearch，创建索引，没有引入框架来填充JSON文档。Elasticsearch会迭代索引JSON文档中的每一个域，判断出它的域，创建对应映射。这听起来很理想，但是Elasticsearch的映射（mapping）不一定总是正确的。如果为域选择了错误的类型，将会出现索引错误。</p>
+<p>不用次索引作为模型存储，Elasticsearch就是这样。我们不需要事先定义数据结构，它会从你的文档结构推导并且依此决定去如何创建索引。在这方面，Elasticsearch索引数据使用了隐式模式，而不是显示模式。</p>
+<p>因此，索引的决策是非常重要的，在你搜索你的数据的时候它有很大的影响。如果它是字符串域（string field），是否应该标记化和规范化，如果是，怎样进行？如果是数值域（numeric field），需要怎样的精度？里面还有很多类型像日期，空间形状，和父子关系域，它们需要特别注意。</p>
+<p>如果不进行分析，存储，甚至发送给Elasticsearch的数据都不需要回应搜索请求。特别地，仔细检查不是由自己定义的映射（mapping）内容（例如，Logstash就会为你自动生成映射）。我们打算去索引大量的数据进Elasticsearch吗？或者我们已经试着这么做了，但是结果吞吐量非常低？如果你搜索需要，在定义我们的索引映射过程中这里有许多优化技术。这篇教程收集了一些列技巧和想法去增加Elasticsearch索引的吞吐量。</p>
+<h3 id="自定义域映射"><a href="#自定义域映射" class="headerlink" title="自定义域映射"></a>自定义域映射</h3><p>对于分析域（ analyzed fields）, 可以使用满足你域需要的最简单的分析器。如果没问题你甚至可以设置为<strong>not_analyzed</strong>？</p>
+<p>域类型默认是字符串的，被认为是包含全文的。也就是说它们的值在索引前先要通过分析器，对于域的全文查询查询字符串也将在搜索前通过分析器的处理。</p>
+<p>对于字符串域有两个非常重要的映射参数是index和analyzer。</p>
+<ul>
+<li><p><strong>index:</strong> 这个索引参数控制如何将字符串索引。它有三个值可供选择。</p>
+</li>
+<li><p><strong>analyzed:</strong> 先分析字符串再索引它。换句话说索引的域是可以全文检索的。</p>
+</li>
+<li><p><strong>not_analyzed:</strong> 索引的域是可以被搜索的，但是索引的值是明确的。并不会对它进行分析。</p>
+</li>
+<li><p><strong>no:</strong> 不对这个域索引。这个域不能被搜索。</p>
+</li>
+</ul>
+<p>字符串域默认的索引参数是 <strong>analyzed</strong>。如果我想映射域作为一个确切的值，我们需要设置为 <strong>not_analyzed</strong>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    &quot;tag&quot;: &#123;</div><div class="line">        &quot;type&quot;:     &quot;string&quot;,</div><div class="line">        &quot;index&quot;:    &quot;not_analyzed&quot;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>另外一些简单的类型（例如long, double, date等）也同样接收索引参数，但是对应的值只能是no和not_analyzed，因为他们的值是不用分析的。</p>
+<p><strong>analyzer:</strong> 用于分析字符串域, 使用分析器参数来指定搜索和索引时使用哪个分析器。默认，Elasticsearch使用<strong>standard</strong> 分析器,但是你也可以改用一个内建的其他分析器，例如 <strong>whitespace</strong>，<strong>simple</strong> 或者 <strong>english</strong>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    &quot;tweet&quot;: &#123;</div><div class="line">        &quot;type&quot;:     &quot;string&quot;,</div><div class="line">        &quot;analyzer&quot;: &quot;english&quot;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h3 id="禁用-source-域"><a href="#禁用-source-域" class="headerlink" title="禁用 _source 域"></a>禁用 _source 域</h3><p><code>_source</code> 域包含索引时原始的JSON文档串。<code>_source</code>域它是不会被索引的（因此也是不可以被搜索），但是它是被存储的，在执行例如get或者search请求的时候它可以被返回。 虽然它很方便，但是source导致了索引的额外开销。因为这个原因，可以如下这样禁用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/index_name/’ -d &apos;&#123;</div><div class="line">  &quot;mappings&quot;: &#123;</div><div class="line">    &quot;tweet&quot;: &#123;</div><div class="line">      &quot;_source&quot;: &#123;</div><div class="line">        &quot;enabled&quot;: false</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;&apos;</div></pre></td></tr></table></figure>
+<p>用户经常没怎么思考后果就禁用了<code>_source</code>域，然后就后悔了。如果<code>_source</code>域是不可用的，有几个特性就不能支持：</p>
+<ul>
+<li><p><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html" target="_blank" rel="external">update</a>, <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update-by-query.html" target="_blank" rel="external">update_by_query</a>, 和 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-reindex.html" target="_blank" rel="external">reindex</a> APIs.</p>
+</li>
+<li><p>即时 <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-highlighting.html" target="_blank" rel="external">高亮</a>.</p>
+</li>
+<li><p>不能通过一个Elasticsearch索引去重建另一个索引，不能改变映射或者分析设置，或者更新索引到一个新的主版本。</p>
+</li>
+<li><p>不能通过观察索引时的原始文档去调试查询或者聚合接口。</p>
+</li>
+<li><p>不具有自动修复索引的能力。</p>
+</li>
+</ul>
+<h3 id="引入和排除-source的域"><a href="#引入和排除-source的域" class="headerlink" title="引入和排除_source的域"></a>引入和排除_source的域</h3><p>如果你使用<code>_source</code>域, 你设置任何其他域为<strong>_stored</strong>也不会附加存储。如果你不使用 <code>_source</code> 域,你就必须设置<strong>_stored</strong>你要存储的域。 注，使用<code>_source</code>可以带来使用更新API的能力。</p>
+<p>一个专家级的特性就是剪裁<code>_source</code>域，在文档已经索引后，存储前。移除<code>_source</code>中的域有点类似于禁用<code>_source</code>域，尤其是无法从一个Elasticsearch索引重建另一个索引。</p>
+<p>引入、排除参数，也可以接受占位符，可以如下使用：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/logs’ -d ‘&#123;</div><div class="line">  &quot;mappings&quot;: &#123;</div><div class="line">    &quot;event&quot;: &#123;</div><div class="line">      &quot;_source&quot;: &#123;</div><div class="line">        &quot;includes&quot;: [</div><div class="line">          &quot;*.count&quot;,</div><div class="line">          &quot;meta.*&quot;</div><div class="line">        ],</div><div class="line">        &quot;excludes&quot;: [</div><div class="line">          &quot;meta.description&quot;,</div><div class="line">          &quot;meta.attributes.*&quot;</div><div class="line">        ]</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<p>这些域(1,2,3,4)将被从<code>_source</code>域里移除。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/logs/event/1’ -d ‘&#123;</div><div class="line">  &quot;requests&quot;: &#123;</div><div class="line">    &quot;count&quot;: 10,</div><div class="line">    &quot;foo&quot;: &quot;bar&quot; //1</div><div class="line">  &#125;,</div><div class="line">  &quot;meta&quot;: &#123;</div><div class="line">    &quot;name&quot;: &quot;Some metric&quot;, </div><div class="line">    &quot;description&quot;: &quot;Some metric description&quot;, //2</div><div class="line">    &quot;attributes&quot;: &#123;</div><div class="line">      &quot;foo&quot;: &quot;one&quot;, //3</div><div class="line">      &quot;baz&quot;: &quot;two&quot; //4</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<p>我们可以搜索 <code>meta.attributes.foo</code> 域, 即使它没有存储在<code>_source</code>域里。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">curl -XGET ‘http://localhost:9200/logs/event/_search’ -d ’&#123;</div><div class="line">  &quot;query&quot;: &#123;</div><div class="line">    &quot;match&quot;: &#123;</div><div class="line">      &quot;meta.attributes.foo&quot;: &quot;one&quot; //searchable field</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<h3 id="禁用-all-域"><a href="#禁用-all-域" class="headerlink" title="禁用 _all 域"></a>禁用 _all 域</h3><p><code>_all</code>这个域是一个特殊的，拥有所有域的，使用空格作分隔符将所有字段拼接在一起的大字符串，它可以用于分析和索引，但是不存储。这就意味着他可以被搜索，但是不可以检索。</p>
+<p><code>_all</code>域允许你搜索文档中的值，在你并不知道哪个域包含这个值的时候。这在开始一个新的数据集的时候是非常有用的。举例： </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/my_index/user/1’ -d ’&#123;</div><div class="line">  &quot;first_name&quot;:    &quot;Will&quot;,</div><div class="line">  &quot;last_name&quot;:     &quot;Smith&quot;,</div><div class="line">  &quot;date_of_birth&quot;: &quot;1975-10-25&quot;</div><div class="line">&#125;’</div><div class="line">curl -XGET ‘http://localhost:9200/my_index/_search’ -d ’&#123;</div><div class="line">  &quot;query&quot;: &#123;</div><div class="line">    &quot;match&quot;: &#123;</div><div class="line">      &quot;_all&quot;: &quot;will smith 1975&quot;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<p><code>_all</code>完全可以禁用通过在setting中把<strong>enabled</strong>设为<code>false</code>：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/my_index’ -d ‘&#123;</div><div class="line">  &quot;mappings&quot;: &#123;</div><div class="line">    &quot;type_1&quot;: &#123;</div><div class="line">      &quot;properties&quot;: &#123;...&#125;</div><div class="line">    &#125;,</div><div class="line">    &quot;type_2&quot;: &#123;</div><div class="line">      &quot;_all&quot;: &#123;</div><div class="line">        &quot;enabled&quot;: false</div><div class="line">      &#125;,</div><div class="line">      &quot;properties&quot;: &#123;...&#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<p>如果<code>_all</code>域是禁用的，使用URI请求将不可以查询<strong>query_string</strong> 和 <strong>simple_query_string</strong>。我们可以配置请求使用默认<code>index.query.default_field</code>配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/my_index’ -d ‘&#123;</div><div class="line">  &quot;mappings&quot;: &#123;</div><div class="line">    &quot;my_type&quot;: &#123;</div><div class="line">      &quot;_all&quot;: &#123;</div><div class="line">        &quot;enabled&quot;: false</div><div class="line">      &#125;,</div><div class="line">      &quot;properties&quot;: &#123;</div><div class="line">        &quot;content&quot;: &#123;</div><div class="line">          &quot;type&quot;: &quot;text&quot;</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;,</div><div class="line">  &quot;settings&quot;: &#123;</div><div class="line">    &quot;index.query.default_field&quot;: &quot;content&quot; </div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<h3 id="禁用分析域的-Norms"><a href="#禁用分析域的-Norms" class="headerlink" title="禁用分析域的 Norms"></a>禁用分析域的 Norms</h3><p>Norms 用于存储各种各样的规范（数值表示域的相对长度和索引时boost设置），它稍后用与在查询文档时计算得分依此排序。</p>
+<p>虽然是使用于计算得分，norms还是要使用非常多的内存（甚至是要记录每个域中一个字节一个字节的顺序，即便这个域在这个文档中并不存在）。 如果你并不需要在这个字段上计算得分，你就可以在这个域上禁用norms。仅用于过滤或者聚合的字段就特别适合如此。</p>
+<p>使用<a href="https://www.elastic.co/guide/en/elasticsearch/reference/2.0/indices-put-mapping.html" target="_blank" rel="external">PUT mapping API</a> 禁用Norms，如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/my_index/_mapping/my_type’ -d ‘&#123;</div><div class="line">  &quot;properties&quot;: &#123;</div><div class="line">    &quot;title&quot;: &#123;</div><div class="line">      &quot;type&quot;: &quot;string&quot;,</div><div class="line">      &quot;norms&quot;: &#123;</div><div class="line">        &quot;enabled&quot;: false</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<p>Norms并不会立即移除，它将在继续索引的时候，在老的段合并为新段的过程中移除。在一个已经移除norms的域上计算分数都可能的到不一致的结果，因为这些域不在有norms，而其他域依然保持有norms。</p>
+<h3 id="当下默认的index-options参数"><a href="#当下默认的index-options参数" class="headerlink" title="当下默认的index_options参数"></a>当下默认的index_options参数</h3><p>你需要存储词项的频率和位置么，默认情况是会这么做的，或者你也可以减少它，可能你只需要文档号。设置 <strong>index_options</strong>为你真正需要的值，这个参数是影响字符串索引的核心。</p>
+<p>index_options 参数用于控制增加到倒排索引的信息，为了搜索和高亮。它可以接受如下设置：</p>
+<ul>
+<li><p><strong>docs: </strong> 只索引文档号。可以用于回答词项是否存在于文档中的这个域。</p>
+</li>
+<li><p><strong>freqs:</strong> 文档号和词频都会被存储. 词项频率越高积分越高。</p>
+</li>
+<li><p><strong>positions:</strong> 文档号，词项，还有词的位置被索引。位置可以用于模糊或者短语查询。</p>
+</li>
+<li><p><strong>offsets:</strong> 文档号，词项，词的位置，和开始到结束的字符偏移（词项映射到原来的字符串）被索引。 偏移提供<strong>postings highlighter</strong>。</p>
+</li>
+</ul>
+<p>分析字符串域默认是会使用positions，其他域默认使用docs。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">curl -XPUT ‘http://localhost:9200/my_index’ -d ‘&#123;</div><div class="line">  &quot;mappings&quot;: &#123;</div><div class="line">    &quot;my_type&quot;: &#123;</div><div class="line">      &quot;properties&quot;: &#123;</div><div class="line">        &quot;text&quot;: &#123;</div><div class="line">          &quot;type&quot;: &quot;text&quot;,</div><div class="line">          &quot;index_options&quot;: &quot;offsets&quot;</div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div><div class="line">curl -XPUT ‘http://localhost:9200/my_index/my_type/1’ -d ‘&#123;</div><div class="line">  &quot;text&quot;: &quot;Quick brown fox&quot;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<p>文本域默认可以使用<strong>postings highlighter</strong>，索引参数是<strong>offsets</strong>。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">curl -XGET ‘http://localhost:9200/my_index/_search’ -d ‘&#123;</div><div class="line">  &quot;query&quot;: &#123;</div><div class="line">    &quot;match&quot;: &#123;</div><div class="line">      &quot;text&quot;: &quot;brown fox&quot;</div><div class="line">    &#125;</div><div class="line">  &#125;,</div><div class="line">  &quot;highlight&quot;: &#123;</div><div class="line">    &quot;fields&quot;: &#123;</div><div class="line">      &quot;text&quot;: &#123;&#125; </div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;’</div></pre></td></tr></table></figure>
+<h3 id="使用自动ID功能"><a href="#使用自动ID功能" class="headerlink" title="使用自动ID功能"></a>使用自动ID功能</h3><p>如果你并没有为每篇原始文档设置ID，那可以使用Elasticsearch自动生成ID的功能。它可以避免查找version因为自动产生的ID是唯一的。</p>
+<p>如果使用你自己的ID，试着挑选一个对Lucene友好的ID。例如包含<strong>用零填充的IDS</strong>,<strong>UUID-1</strong>, 和 <strong>nanotime</strong>; 这些ID一致，顺序模式使得非常好进行压缩。相反，以UUID-4作为ID，基本上是随机的，压缩差，Lucene会变慢。</p>
+<p><a href="https://qbox.io/blog/maximize-guide-elasticsearch-indexing-performance-part-2" target="_blank" rel="external"><strong>继续第二部分 “How to Maximize Elasticsearch Indexing Performance.’’</strong></a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Elasticsearch/" rel="tag"># Elasticsearch</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/06/19/2017/思考需要交融/" rel="next" title="思考需要交融">
+                <i class="fa fa-chevron-left"></i> 思考需要交融
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/"
+           data-title="怎样去最大化Elasticsearch索引性能(第一部分)" data-url="http://geekcat.me/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/user.png"
+               alt="geekcat" />
+          <p class="site-author-name" itemprop="name">geekcat</p>
+          <p class="site-description motion-element" itemprop="description">参差多态是幸福的本源</p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">15</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">分类</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">16</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#自定义域映射"><span class="nav-number">1.</span> <span class="nav-text">自定义域映射</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#禁用-source-域"><span class="nav-number">2.</span> <span class="nav-text">禁用 _source 域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#引入和排除-source的域"><span class="nav-number">3.</span> <span class="nav-text">引入和排除_source的域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#禁用-all-域"><span class="nav-number">4.</span> <span class="nav-text">禁用 _all 域</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#禁用分析域的-Norms"><span class="nav-number">5.</span> <span class="nav-text">禁用分析域的 Norms</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#当下默认的index-options参数"><span class="nav-number">6.</span> <span class="nav-text">当下默认的index_options参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#使用自动ID功能"><span class="nav-number">7.</span> <span class="nav-text">使用自动ID功能</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">geekcat</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"guiyanakuang"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

@@ -259,6 +259,162 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://geekcat.me/2017/12/23/2017/构建自己的日志索引系统（序言）/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="geekcat">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/user.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="GeekCat的脑窝">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="GeekCat的脑窝" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" itemprop="url">
+                  构建自己的日志索引系统（序言）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-12-23T23:52:00+08:00">
+                2017-12-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+              <span class="post-meta-divider">|</span>
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/技术/" itemprop="url" rel="index">
+                    <span itemprop="name">技术</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/12/23/2017/构建自己的日志索引系统（序言）/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>相隔4个月没有写技术博客了，还真是有点懒惰啊，蛤蛤，其实我还是有很多借口的哇。这半年都从零独立开发公司的日志索引系统。踩了很多坑，也有一些小的技术突破，所以准备写一篇叫《构建自己的日志索引系统》的系列文章，记录与讨论一下我采用的技术方案。</p>
+<p>这一篇作为序言，那先讲讲这个系统的前世今生吧，为什么要做日志索引，对于一个产品来说，日志是一个监控诊断应用健康状况，帮助反馈信息的重要途径，一个数据团队是不可以缺少日志检索这个体系的。目前市面上最主流的方案是ELK(ElasticSearch + Logstash + Kibana)，ElasticSearch 进行数据索引，Logstash 用于数据收集，Kibana 用于数据分析。那我们为什么要重新造轮子呢，为什么不拿来主义呢。因为测试 ElasticSearch 的索引性能结果并不满意，单机测试经过了一系列的调优极限差不多3W条日志/每秒，并且CPU占用这个情况下也非常高，如果按照这个吞吐量进行部署将需要一个比较大的集群，性价比非常不划算。我们希望这个日志系统能与我们的 Hadoop 集群相融合，背靠大山，吃喝不愁，并且他们的计算高峰点正好是互相错开的（日志系统高峰在前夜，离线集群跑数在凌晨），处在同一个集群不会有太大的影响，由此来共用机器降低成本。</p>
+<p>在降低成本的前提下还需要有较高的索引性能，所以我的最终方案是，重写 ELasticSearch，当然重写的过程中我做了许多取舍，首先去除了 ES (后面都简写)的写事务，写事务是一个非常影响索引性能的点，ES 在写索引的同时还要进行事务日志的写入，保证日志的写入后再进行正真的 commit。那我如何保证数据安全的落地呢？这一块数据的维持就交给了 Kafka 来完成。第二去除 ES 中相对日志索引来说多余的功能，例如使用了更精简的元数据设计，不在出现 ES 中 _source、_all 字段。另外在查询方面并没有保留 ES search 的 DSL 风格，还是改为深入人心的 SQL 语法，一方面日志检索系统，并没用到 Lucene 的打分机制，都是进行是否匹配的布尔查询，对于模糊查询等搜索引擎系统需要的功能，我们只需要其精确匹配的部分，使用 SQL 表达力上也非常足够。最后存储方面并不像 ES 集群写入本地磁盘，而是改为 HDFS 文件系统，保证数据备份也增大了集群的吞吐量，磁盘 IO 转换为网络 IO，在万兆网卡下，索引的瓶颈也从 IO 转变到单机的 CPU 使用，这一步分 Directory 的抽象就直接使用了 Solr 的代码。</p>
+<img src="/images/日志索引平台数据拉取架构.png">
+<center>日志索引平台数据拉取架构</center>
+
+
+<p>设想了一下接下来大概会连载如下六个章节</p>
+<h4 id="元数据的设计"><a href="#元数据的设计" class="headerlink" title="元数据的设计"></a>元数据的设计</h4><p>日志索引，不同于业务的数据，在数据内容方面字段的更改比较频繁，而且单条日志来说字段数并不统一。在不数据量上要考虑到伸缩扩展性。基于这两方面阐述一下具有时间线的动态元数据如何设计与实现。</p>
+<h3 id="数据恢复机制"><a href="#数据恢复机制" class="headerlink" title="数据恢复机制"></a>数据恢复机制</h3><p>分布式服务，难免会有单节点故障，网络或者磁盘损坏等原因都有可能发生，如何在发生故障后恢复数据，从正确的位置上重新拉取 Kafka？</p>
+<h3 id="近实时索引，内存与hdfs的两段式写入"><a href="#近实时索引，内存与hdfs的两段式写入" class="headerlink" title="近实时索引，内存与hdfs的两段式写入"></a>近实时索引，内存与hdfs的两段式写入</h3><p>Lucene 的索引写入分为好几个阶段，其中对磁盘的 flush 与 commit 是非常耗时的过程，所以直接对 hdfs 文件系统写入索引，很难做到近实时，需要等待文档堆积到一定数量之后引发 flush / commit，之后才能查询到这之间的数据。为了做到近实时，就要利用到 RamDirectory，在内存中先进行索引，再批量刷新进入磁盘。</p>
+<h3 id="弹性伸缩"><a href="#弹性伸缩" class="headerlink" title="弹性伸缩"></a>弹性伸缩</h3><p>为了保证集群的高可用，必须能应对特殊事件造成突如其来的访问高峰，能随着数据量的增多自动扩容，随着高峰退去，自动削减机器。可谓“他强由他强，清风拂山岗；他横由他横，明月照大江。”</p>
+<h3 id="SQL解析器与执行计划"><a href="#SQL解析器与执行计划" class="headerlink" title="SQL解析器与执行计划"></a>SQL解析器与执行计划</h3><p>为了提供一个业务方能非常快接受的服务，使用大家都非常熟悉的 SQL 语句就是很好的选择。这一篇计划讲解一下如何开发 SQL 解析器来映射到 Lucene Query，查询逻辑如何分发到集群，子节点如何高效的执行逻辑计划。</p>
+<h3 id="RPC与序列化"><a href="#RPC与序列化" class="headerlink" title="RPC与序列化"></a>RPC与序列化</h3><p>相对于单机服务来说，分布式服务增加了机器之间的通讯，这就必须使用到 RPC 服务，服务数据又涉及到对象的序列化。这一块的实现也会大大影响到查询的性能。</p>
+<p>先哇这么多坑，争取过年前把坑填完。（逃。。。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://geekcat.me/2017/08/23/2017/台风过后一片狼藉/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1714,239 +1870,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://geekcat.me/2017/01/15/2017/构造自定义领域语言（二）/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="geekcat">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="/images/user.png">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="GeekCat的脑窝">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="GeekCat的脑窝" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/01/15/2017/构造自定义领域语言（二）/" itemprop="url">
-                  构造自定义领域语言（二）
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-01-15T11:14:08+08:00">
-                2017-01-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-              <span class="post-meta-divider">|</span>
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/技术/" itemprop="url" rel="index">
-                    <span itemprop="name">技术</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <a href="/2017/01/15/2017/构造自定义领域语言（二）/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/01/15/2017/构造自定义领域语言（二）/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-
-          
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>上星期比较忙哇，鸽了，这个星期开始补，进展缓慢那补什么呢，翻译一篇官方的词法规则文档吧。待我理解完了AST和翻译器部分开始撸代码┑(￣。。￣)┍</p>
-<h1 id="词法规则（Lexer-Rules）"><a href="#词法规则（Lexer-Rules）" class="headerlink" title="词法规则（Lexer Rules）"></a>词法规则（Lexer Rules）</h1><p>词法的语法由词法规则组成，从而分成不同的模式。词法模式允许我们将单个词法语法分成多个子规则。词法分析器只能从当前模式中返回匹配的tokens。</p>
-<p>词法规则的的定义或多或少遵循了解析器的语法，但是词法规则不能有参数、返回值和局部变量。词法规则名称必须以大写字母开头，用以区别语法解析器的规则名称：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">/** Optional document comment */</div><div class="line">TokenName : alternative1 | ... | alternativeN ;</div></pre></td></tr></table></figure></p>
-<p>你也可以定义不是词法tokens的规则，而是帮助识别tokens片段的规则，这些规则对于语法解析器是不可见的：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">fragment</div><div class="line">HelperTokenRule : alternative1 | ... | alternativeN ;</div></pre></td></tr></table></figure>
-<p>例如，<code>DIGIT</code> 是一个很常见的规则：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">INT : DIGIT+ ; // references the DIGIT helper rule</div><div class="line">fragment DIGIT : [0-9] ; // not a token by itself</div></pre></td></tr></table></figure>
-<h1 id="词法模式（Lexical-Modes）"><a href="#词法模式（Lexical-Modes）" class="headerlink" title="词法模式（Lexical Modes）"></a>词法模式（Lexical Modes）</h1><p>词法模式允许你通过上下文对词法规则进行分组。他就像有多个子运算，但是对于特定上线文只有那么一些。词法分析器只能通过当前模式中的规则进行匹配返回tokens。词法分析器开始是默认模式的，除非指定模式，否则所有规则都是属于默认规则的。在组合的语法中是不能使用词法模式的，只有单词的词法语法定义中可以<a href="https://pragprog.com/book/tpantlr2/the-definitive-antlr-4-reference" target="_blank" rel="external">（请参阅XMLLExer）</a>。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">rules in default mode</div><div class="line">...</div><div class="line">mode MODE1;</div><div class="line">rules in MODE1</div><div class="line">...</div><div class="line">mode MODEN;</div><div class="line">rules in MODEN</div><div class="line">...</div></pre></td></tr></table></figure></p>
-<h1 id="词法规则元素（Lexer-Rule-Elements）"><a href="#词法规则元素（Lexer-Rule-Elements）" class="headerlink" title="词法规则元素（Lexer Rule Elements）"></a>词法规则元素（Lexer Rule Elements）</h1><p>词法规则允许两种构造方法他们是在语法规则中不可用的：<code>..</code>范围云算法和使用<code>[]</code>扩起字符集。不要将字符集的规则与词法规则混淆。<code>[characters]</code>仅表示<code>characters</code>在词法规则的字符几中，这里是所有词法规则元素的简介：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">词法</th>
-<th style="text-align:left">描述</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">T</td>
-<td style="text-align:left">在当前位置允许匹配T，匹配规则名称必须以大写字母开头。</td>
-</tr>
-<tr>
-<td style="text-align:left">’literal’</td>
-<td style="text-align:left">匹配字符或者字符串文字，例如， ’while’ or ’=’.</td>
-</tr>
-<tr>
-<td style="text-align:left">[char set]</td>
-<td style="text-align:left">匹配字符集中的一个字符，将x-y解释为范围x和y之间的字符集，包括自身。以下转义字符被解释为单个特殊字符：\n, \r, \b, \t, and \f。匹配 ]、\或者 - 你必须使用转移符 \。您也可以使用Unicode字符规范：\uXXXX。这里是一些例子：<br><code>WS : [ \n\u000D] -&gt; skip ; // same as [ \n\r] <br>ID : [a-zA-Z] [a-zA-Z0-9]* ; // match usual identifier spec <br>DASHBRACK : [-]]+ ; // match - or ] one or more times</code></td>
-</tr>
-<tr>
-<td style="text-align:left">’x’..’y’</td>
-<td style="text-align:left">匹配范围x和y之间的任意单个字符。例如，’a’..’z’。 ‘a’..’z’与[a-z]相同。</td>
-</tr>
-<tr>
-<td style="text-align:left">T</td>
-<td style="text-align:left">调用语法规则T;一般允许递归，但是左递归是禁止的，T可以是常规tokens或者片段规则（fragment rule）：<br><code>ID : LETTER (LETTER&#124;’0’..’9’)* ; fragment LETTER : [a-zA-Z\u0080-\u00FF_] ;</code></td>
-</tr>
-<tr>
-<td style="text-align:left">.</td>
-<td style="text-align:left">点是与任何单个字符匹配的单字符通配符，例如：<br><code>ESC : ‘\‘ . ; // match any escaped \x character</code></td>
-</tr>
-<tr>
-<td style="text-align:left">{«action»}</td>
-<td style="text-align:left">Lexer操作可以出现在4.2之外的任何位置，而不仅仅出现在最外面用来替代末尾。 词法分析器根据规则中动作的位置来执行动作。 要为具有多个选项执行单个操作，可以将括号括在括号中，然后再执行操作：<br><code>END : (‘endif’&#124;’end’) {System.out.println(“found an end”);} ;</code><br>该操作要符合目标语言的语法。 ANTLR将动作的内容逐字复制到生成的代码中;并没有像$ x.y这样的表达式的翻译，因为着是在动作规则中。只有最外层tokens规则中的action被执行。换句话说，如果STRING调用ESC_CHAR和ESC_CHAR有一个动作，当词法分析器在STRING开始匹配时，不执行该动作。</td>
-</tr>
-<tr>
-<td style="text-align:left">{«p»}?</td>
-<td style="text-align:left">评价语义谓词«p»。 如果“p”在运行时评估为false，则周围规则变为“不可见”（不可见）。 表达式«p»符合目标语言语法。 虽然语义谓词可以出现在词法规则中的任何地方，但在规则末尾使用它们是最有效的。 一个警告是，语义谓词必须先于词法分析器动作。 请参阅Lexer规则中的谓词。</td>
-</tr>
-<tr>
-<td style="text-align:left">~x</td>
-<td style="text-align:left">匹配不在x中描述的集合中的任何单个字符。Set x可以是单个字符、范围或～<code>（’x’&#124;’y’&#124;’z’）</code>或<code>～[xyz]</code>的子字符集表示。这里有一个规则使用～来匹配任意字符，使用～[\ r \ n] ：<br><code>COMMENT : ‘#’ ~[\r\n] ‘\r’? ‘\n’ -&gt; skip ;<code></code></code></td>
-</tr>
-</tbody>
-</table>
-<p>相对于语法规则，词法规则允许子句在括号和EBNF运算符中：?,<em>,+。COMMENT规则说明了</em>,?的使用规则。使用+对于[0-9]+可以去匹配数字，词法子句也可以使用?作为后缀再EBNF操作中。</p>
-<h1 id="递归的词法规则（Recursive-Lexer-Rules）"><a href="#递归的词法规则（Recursive-Lexer-Rules）" class="headerlink" title="递归的词法规则（Recursive Lexer Rules）"></a>递归的词法规则（Recursive Lexer Rules）</h1><p>ANTLR词法规则可以是递归的，不同于大多数词法语法工具。当你想匹配嵌套的tokens，如嵌套的动作块，这是很方便的：{…{…}…}。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">lexer grammar Recur;</div><div class="line">ACTION : &apos;&#123;&apos; ( ACTION | ~[&#123;&#125;] )* &apos;&#125;&apos; ;</div><div class="line">WS : [ \r\t\n]+ -&gt; skip ;</div></pre></td></tr></table></figure>
-<h1 id="冗余字符串字面量（Redundant-String-Literals）"><a href="#冗余字符串字面量（Redundant-String-Literals）" class="headerlink" title="冗余字符串字面量（Redundant String Literals）"></a>冗余字符串字面量（Redundant String Literals）</h1><p>请注意，不要在多个词法分析器规则的右侧指定相同的字符串文字。这样的文字是模糊的，会导致可以匹配多种token类型。ANTLR 会导致语法解析时匹配这类模糊的文字时不可用。对于跨模式的规则也是如此。例如，以下词法语法定义具有相同字符序列的两个标记：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">lexer grammar L;</div><div class="line">AND : &apos;&amp;&apos; ;</div><div class="line">mode STR;</div><div class="line">MASK : &apos;&amp;&apos; ;</div></pre></td></tr></table></figure>
-<p>解析器语法规则不能引用文字“＆”，但它可以引用标记的名称：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">parser grammar P;</div><div class="line">options &#123; tokenVocab=L; &#125;</div><div class="line">a : &apos;&amp;&apos; // results in a tool error: no such token</div><div class="line">    AND // no problem</div><div class="line">    MASK // no problem</div><div class="line"> ;</div></pre></td></tr></table></figure>
-<p>这里构建了一个测试序列：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ antlr4 L.g4 # yields L.tokens file needed by tokenVocab option in P.g4</div><div class="line">$ antlr4 P.g4</div><div class="line">error(126): P.g4:3:4: cannot create implicit token for string literal &apos;&amp;&apos; in non-combined grammar</div></pre></td></tr></table></figure>
-<h1 id="词法规则的动作（Lexer-Rule-Actions）"><a href="#词法规则的动作（Lexer-Rule-Actions）" class="headerlink" title="词法规则的动作（Lexer Rule Actions）"></a>词法规则的动作（Lexer Rule Actions）</h1><p>ANTLR词法分析器在匹配词法规则之后创建Token对象。每个对token的请求在Lexer.nextToken中开始，一旦它识别出令牌，它就调用emit函数。emit从词法分析器的当前状态收集的信息为基础以构建token。它访问字段_type，_text，_channel，_tokenStartCharIndex，_tokenStartLine和_tokenStartCharPositionInLine。您可以使用各种setter方法（如setType）设置这些的状态。 例如，如果enumIsKeyword为false，则以下规则将枚举转换为标识符。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">ENUM : &apos;enum&apos; &#123;if (!enumIsKeyword) setType(Identifier);&#125; ;</div></pre></td></tr></table></figure>
-<p>ANTLR在词法操作中没有特殊的$x属性转换（与v3版本不同）<br>对于词法规则，最多可以有一个单独的动作，而不管该规则中有多少备选方案。</p>
-<h1 id="词法命令行（Lexer-Commands）"><a href="#词法命令行（Lexer-Commands）" class="headerlink" title="词法命令行（Lexer Commands）"></a>词法命令行（Lexer Commands）</h1><p>为了避免将语法绑定到特定的目标语言，ANTLR支持词法命令。与任意嵌入操作不同，这些命令遵循特定语法，并且仅限于几个常用命令。Lexer命令显示在词法分析器规则定义的最外部替换的末尾。像任意动作一样，每个token规则只能有一个。 词法命令由 - &gt;运算符组成，后跟一个或多个可以选择参数的命令名：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">TokenName : «alternative» -&gt; command-name</div><div class="line">TokenName : «alternative» -&gt; command-name («identifier or integer»)</div></pre></td></tr></table></figure>
-<p>可选的多个命令，以逗号分隔。这里是有效的命令名称：</p>
-<ul>
-<li>skip</li>
-<li>more</li>
-<li>popMode</li>
-<li>mode( x )</li>
-<li>pushMode( x )</li>
-<li>type( x )</li>
-<li>channel( x )</li>
-</ul>
-<p>查看图书源代码的用法，一些示例如下所示</p>
-<h2 id="skip"><a href="#skip" class="headerlink" title="skip"></a>skip</h2><p>skip命令告诉词法分析器丢弃那些文本。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">ID : [a-zA-Z]+ ; // match identifiers</div><div class="line">INT : [0-9]+ ; // match integers</div><div class="line">NEWLINE:&apos;\r&apos;? &apos;\n&apos; ; // return newlines to parser (is end-statement signal)</div><div class="line">WS : [ \t]+ -&gt; skip ; // toss out whitespace</div></pre></td></tr></table></figure>
-<h2 id="mode-pushMode-popMode-and-more"><a href="#mode-pushMode-popMode-and-more" class="headerlink" title="mode(), pushMode(), popMode, and more"></a>mode(), pushMode(), popMode, and more</h2><p>模式命令改变模式堆栈，因此改变词法分析器的模式。 more命令强制词法分析器获得另一个标记，但不抛出当前文本。token类型将是匹配“最终”的规则（即，没有更多或跳过命令的那个）的token类型。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">// Default &quot;mode&quot;: Everything OUTSIDE of a tag</div><div class="line">COMMENT : &apos;&lt;!--&apos; .*? &apos;--&gt;&apos; ;</div><div class="line">CDATA   : &apos;&lt;![CDATA[&apos; .*? &apos;]]&gt;&apos; ;OPEN : &apos;&lt;&apos; -&gt; pushMode(INSIDE) ;</div><div class="line"> ...</div><div class="line">XMLDeclOpen : &apos;&lt;?xml&apos; S -&gt; pushMode(INSIDE) ;</div><div class="line">SPECIAL_OPEN: &apos;&lt;?&apos; Name -&gt; more, pushMode(PROC_INSTR) ;</div><div class="line">// ----------------- Everything INSIDE of a tag ---------------------</div><div class="line">mode INSIDE;</div><div class="line">CLOSE        : &apos;&gt;&apos; -&gt; popMode ;</div><div class="line">SPECIAL_CLOSE: &apos;?&gt;&apos; -&gt; popMode ; // close &lt;?xml...?&gt;</div><div class="line">SLASH_CLOSE  : &apos;/&gt;&apos; -&gt; popMode ;</div></pre></td></tr></table></figure>
-<p>另外检查：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">lexer grammar Strings;</div><div class="line">LQUOTE : &apos;&quot;&apos; -&gt; more, mode(STR) ;</div><div class="line">WS : [ \r\t\n]+ -&gt; skip ;</div><div class="line">mode STR;</div><div class="line">STRING : &apos;&quot;&apos; -&gt; mode(DEFAULT_MODE) ; // token we want parser to see</div><div class="line">TEXT : . -&gt; more ; // collect more text for string</div></pre></td></tr></table></figure>
-<p>弹出模式堆栈的底层将导致异常。使用模式切换命令mode更改当前堆栈顶部。一个或者多个more是相同的和位置并没有关系。</p>
-<h2 id="type"><a href="#type" class="headerlink" title="type()"></a>type()</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">lexer grammar SetType;</div><div class="line">tokens &#123; STRING &#125;</div><div class="line">DOUBLE : &apos;&quot;&apos; .*? &apos;&quot;&apos;   -&gt; type(STRING) ;</div><div class="line">SINGLE : &apos;\&apos;&apos; .*? &apos;\&apos;&apos; -&gt; type(STRING) ;</div><div class="line">WS     : [ \r\t\n]+    -&gt; skip ;</div></pre></td></tr></table></figure>
-<p>对于多个type()命令，只有最右边的命令有效果。</p>
-<h2 id="channel"><a href="#channel" class="headerlink" title="channel()"></a>channel()</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">BLOCK_COMMENT</div><div class="line">    : &apos;/*&apos; .*? &apos;*/&apos; -&gt; channel(HIDDEN)</div><div class="line">    ;</div><div class="line">LINE_COMMENT</div><div class="line">    : &apos;//&apos; ~[\r\n]* -&gt; channel(HIDDEN)</div><div class="line">    ;</div><div class="line">... </div><div class="line">// ----------</div><div class="line">// Whitespace</div><div class="line">//</div><div class="line">// Characters and character constructs that are of no import</div><div class="line">// to the parser and are used to make the grammar easier to read</div><div class="line">// for humans.</div><div class="line">//</div><div class="line">WS : [ \t\r\n\f]+ -&gt; channel(HIDDEN) ;</div></pre></td></tr></table></figure>
-<p>从4.5开始，您还可以在词法分析器规则上方使用以下结构来定义频道名称（如枚举）：</p>
-<p><code>channels { WSCHANNEL, MYHIDDEN }</code></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
   </section>
 
   
@@ -1992,7 +1915,7 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">17</span>
+              <span class="site-state-item-count">18</span>
               <span class="site-state-item-name">日志</span>
             </a>
           </div>
@@ -2009,7 +1932,7 @@
           
             <div class="site-state-item site-state-tags">
               <a href="/tags">
-                <span class="site-state-item-count">18</span>
+                <span class="site-state-item-count">21</span>
                 <span class="site-state-item-name">标签</span>
               </a>
             </div>

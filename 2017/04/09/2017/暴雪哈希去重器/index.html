@@ -1,91 +1,20 @@
 <!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+<title>暴雪哈希去重器 - GeekPig的脑窝</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 
 
-  
-
-
-<html class="theme-next pisces use-motion" lang="zh-Hans">
-<head>
-  <meta charset="UTF-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-<meta name="theme-color" content="#222">
-
-
-
-
-
-
-
-
-
-<meta http-equiv="Cache-Control" content="no-transform" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
-
-
-
-
-
-
-
-<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
-
-<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
-
-
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
-
-
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
-
-
-  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
-
-
-
-
-
-  <meta name="keywords" content="暴雪哈希," />
-
-
-
-
-
-
-
-
-
-
-<meta name="description" content="去重器在做数据处理的时候，去重是非常常用的一种操作，通过Java语言去做去重，一般直接想到使用HashSet，Java的HashSet内部其实还是一个HashMap，如果看过HashSet的源码，你会发现add一个元素e，其实内部是map.put(e, PRESENT)，PRESENT是一个公用的Object，通过返回值来判断e是否存在在map里，所以HashSet内部存储你可以等价于一个Hash">
+    <meta name="description" content="去重器在做数据处理的时候，去重是非常常用的一种操作，通过Java语言去做去重，一般直接想到使用HashSet，Java的HashSet内部其实还是一个HashMap，如果看过HashSet的源码，你会发现add一个元素e，其实内部是map.put(e, PRESENT)，PRESENT是一个公用的Object，通过返回值来判断e是否存在在map里，所以HashSet内部存储你可以等价于一个Hash">
 <meta name="keywords" content="暴雪哈希">
 <meta property="og:type" content="article">
 <meta property="og:title" content="暴雪哈希去重器">
 <meta property="og:url" content="http://geekcat.me/2017/04/09/2017/暴雪哈希去重器/index.html">
 <meta property="og:site_name" content="GeekPig的脑窝">
 <meta property="og:description" content="去重器在做数据处理的时候，去重是非常常用的一种操作，通过Java语言去做去重，一般直接想到使用HashSet，Java的HashSet内部其实还是一个HashMap，如果看过HashSet的源码，你会发现add一个元素e，其实内部是map.put(e, PRESENT)，PRESENT是一个公用的Object，通过返回值来判断e是否存在在map里，所以HashSet内部存储你可以等价于一个Hash">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:updated_time" content="2017-05-31T13:44:35.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="暴雪哈希去重器">
@@ -93,275 +22,146 @@
 
 
 
-<script type="text/javascript" id="hexo.configurations">
-  var NexT = window.NexT || {};
-  var CONFIG = {
-    root: '/',
-    scheme: 'Pisces',
-    version: '5.1.4',
-    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
-    fancybox: true,
-    tabs: true,
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
-    duoshuo: {
-      userId: '0',
-      author: '博主'
-    },
-    algolia: {
-      applicationID: '',
-      apiKey: '',
-      indexName: '',
-      hits: {"per_page":10},
-      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    }
-  };
-</script>
 
 
-
-  <link rel="canonical" href="http://geekcat.me/2017/04/09/2017/暴雪哈希去重器/"/>
-
+<link rel="icon" href="/images/favicon.svg">
 
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/tomorrow-night-eighties.css">
 
 
-  <title>暴雪哈希去重器 | GeekPig的脑窝</title>
-  
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
 
 
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
 
 
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+    
+    
+
+    
 
 
-
-
+<link rel="stylesheet" href="/css/style.css">
 </head>
-
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
-
-  
-  
-    
-  
-
-  <div class="container sidebar-position-left page-post-detail">
-    <div class="headband"></div>
-
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-wrapper">
-  <div class="site-meta ">
-    
-
-    <div class="custom-logo-site-title">
-      <a href="/"  class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">GeekPig的脑窝</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-      
-        <p class="site-subtitle">Isabelita 就是正义</p>
-      
-  </div>
-
-  <div class="site-nav-toggle">
-    <button>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-    </button>
-  </div>
-</div>
-
-<nav class="site-nav">
-  
-
-  
-    <ul id="menu" class="menu">
-      
-        
-        <li class="menu-item menu-item-home">
-          <a href="/" rel="section">
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
             
-              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+                <img src="/images/user.png" alt="暴雪哈希去重器" height="28">
             
-            首页
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-archives">
-          <a href="/archives" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
-            
-            归档
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-categories">
-          <a href="/categories" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
-            
-            分类
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-tags">
-          <a href="/tags" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
-            
-            标签
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-about">
-          <a href="/about" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
-            
-            关于
-          </a>
-        </li>
-      
-
-      
-    </ul>
-  
-
-  
-</nav>
-
-
-
- </div>
-    </header>
-
-    <main id="main" class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          <div id="content" class="content">
-            
-
-  <div id="posts" class="posts-expand">
-    
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://geekcat.me/2017/04/09/2017/暴雪哈希去重器/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="GeekCat">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/user.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="GeekPig的脑窝">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">暴雪哈希去重器</h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2017-04-09T22:06:51+08:00">
-                2017-04-09
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/技术/" itemprop="url" rel="index">
-                    <span itemprop="name">技术</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/04/09/2017/暴雪哈希去重器/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count gitment-comments-count" data-xid="/2017/04/09/2017/暴雪哈希去重器/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+            </a>
         </div>
-      </header>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">归档</a>
+                
+                <a class="navbar-item" href="/categories">分类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                    
+                    
+                    <a class="navbar-item" target="_blank" title="Download on GitHub" href="https://github.com/guiyanakuang">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                    
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
     
-
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
     
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        <h1 id="去重器"><a href="#去重器" class="headerlink" title="去重器"></a>去重器</h1><p>在做数据处理的时候，去重是非常常用的一种操作，通过Java语言去做去重，一般直接想到使用HashSet，Java的HashSet内部其实还是一个HashMap，如果看过HashSet的源码，你会发现add一个元素e，其实内部是<code>map.put(e, PRESENT)</code>，PRESENT是一个公用的Object，通过返回值来判断e是否存在在map里，所以HashSet内部存储你可以等价于一个HashMap，只不过所有的Value是一个公用的Object对象。</p>
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2017-04-09T14:06:51.000Z">2017-04-09</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                </div>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    8 分钟 读完 (大约 1242 个字)
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                暴雪哈希去重器
+            
+        </h1>
+        <div class="content">
+            <h1 id="去重器"><a href="#去重器" class="headerlink" title="去重器"></a>去重器</h1><p>在做数据处理的时候，去重是非常常用的一种操作，通过Java语言去做去重，一般直接想到使用HashSet，Java的HashSet内部其实还是一个HashMap，如果看过HashSet的源码，你会发现add一个元素e，其实内部是<code>map.put(e, PRESENT)</code>，PRESENT是一个公用的Object，通过返回值来判断e是否存在在map里，所以HashSet内部存储你可以等价于一个HashMap，只不过所有的Value是一个公用的Object对象。</p>
 <p>那我接下来谈谈HashMap的实现，HashMap内部有一个哈希桶数组<code>Entry&lt;K,V&gt;[] table</code>，每来一对K/V，会对K进行哈希，哈希值进行取模对应到table中的一个位置，如果桶里已经存在V，那么就发生了Hash冲突，桶的大小是有限，Hash能把数据打散，但冲突在所难免，这时候每个桶里对应的就不是单纯的V，而是一个链表（Java8中又进行的优化，当链表长度到阈值，会变形成红黑树，取值时的搜索速度）</p>
 <h1 id="当你碰到内存的问题"><a href="#当你碰到内存的问题" class="headerlink" title="当你碰到内存的问题"></a>当你碰到内存的问题</h1><p>你已经了解到HashSet、HashMap的内部存储，你会发现你不得不记录所有的K/V，因为你这些容器还要提供给你get的操作，但是当你只需要一个去重功能的时候，你的内存非常珍惜的时候，使用HashSet去去重是不明智的。</p>
 <p>如果有一种神奇的Hash算法，对于每一个Key，都能计算出一个绝不冲突的哈希值，那么问题就简单了，我只要记录这个哈希值就好了，需要的存储就小了很多。</p>
@@ -371,467 +171,1457 @@
 </blockquote>
 <p>这个Hash算法非常高效具体实现在<a href="http://sfsrealm.hopto.org/inside_mopaq/chapter2.htm，内部计算了三个哈希值，一个当作偏移量，另两个效验。三者同时冲突的概率为1:18889465931478580854784，百亿亿分之一，这个冲突概率在很多数据处理中完全是可以接受的（收集的数据中出现噪声的概率要比这高的多）。" target="_blank" rel="external">http://sfsrealm.hopto.org/inside_mopaq/chapter2.htm，内部计算了三个哈希值，一个当作偏移量，另两个效验。三者同时冲突的概率为1:18889465931478580854784，百亿亿分之一，这个冲突概率在很多数据处理中完全是可以接受的（收集的数据中出现噪声的概率要比这高的多）。</a></p>
 <p>下面是我通过暴雪Hash实现的去重器，每个key只记录哈希值，无法还原原值，但是存储要比HashSet小的多。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">BlizzardHashSet</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">int</span> DEFAULT_INITIAL_CAPACITY = <span class="number">200</span>;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> size = <span class="number">0</span>;</div><div class="line">    <span class="keyword">private</span> Entry[] table;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> cryptTable[];</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">BlizzardHashSet</span><span class="params">()</span> </span>&#123;</div><div class="line">        initTable();</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initTable</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> capacity = DEFAULT_INITIAL_CAPACITY;</div><div class="line">        <span class="keyword">this</span>.table = <span class="keyword">new</span> Entry[capacity];</div><div class="line">        initCryptTable();</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * return number of keys in hash table</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span> number of keys</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">size</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> size;</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">checkSize</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (<span class="number">2</span> * size &gt; table.length) &#123;</div><div class="line">            <span class="keyword">int</span> newSize = table.length &lt;&lt; <span class="number">1</span>;</div><div class="line">            Entry[] newTable = <span class="keyword">new</span> Entry[newSize];</div><div class="line">            <span class="keyword">for</span> (Entry e : table) &#123;</div><div class="line">                <span class="keyword">while</span> (e != <span class="keyword">null</span>) &#123;</div><div class="line">                    <span class="keyword">int</span> pos = Math.abs(e.getHash() % newSize);</div><div class="line">                    <span class="keyword">if</span> (newTable[pos] == <span class="keyword">null</span>) &#123;</div><div class="line">                        newTable[pos] = e;</div><div class="line">                    &#125;</div><div class="line">                    <span class="keyword">else</span> &#123;</div><div class="line">                        Entry current = newTable[pos];</div><div class="line">                        Entry next = current.next;</div><div class="line">                        <span class="keyword">do</span> &#123;</div><div class="line">                            <span class="keyword">if</span> (next == <span class="keyword">null</span>) &#123;</div><div class="line">                                current.next = e;</div><div class="line">                                <span class="keyword">break</span>;</div><div class="line">                            &#125;</div><div class="line">                            <span class="keyword">else</span> &#123;</div><div class="line">                                current = next;</div><div class="line">                                next = current.next;</div><div class="line">                            &#125;</div><div class="line">                        &#125; <span class="keyword">while</span> (<span class="keyword">true</span>);</div><div class="line">                    &#125;</div><div class="line">                    Entry temp = e.next;</div><div class="line">                    <span class="keyword">if</span> (temp != <span class="keyword">null</span>) &#123;</div><div class="line">                        e.next = <span class="keyword">null</span>;</div><div class="line">                    &#125;</div><div class="line">                    e = temp;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            table = newTable;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">add</span><span class="params">(String str)</span> </span>&#123;</div><div class="line">        Entry e = <span class="keyword">new</span> Entry(str);</div><div class="line">        <span class="keyword">int</span> hash = e.getHash();</div><div class="line">        <span class="keyword">int</span> pos = Math.abs(hash % table.length);</div><div class="line">        <span class="keyword">if</span> (table[pos] == <span class="keyword">null</span>) &#123;</div><div class="line">            table[pos] = e;</div><div class="line">            size ++;</div><div class="line">            checkSize();</div><div class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">else</span> &#123;</div><div class="line">            Entry oldEntry = table[pos];</div><div class="line">            <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</div><div class="line">                <span class="keyword">if</span> (checkHash(oldEntry, e)) &#123;</div><div class="line">                    <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">                &#125;</div><div class="line">                <span class="keyword">if</span> (oldEntry.next == <span class="keyword">null</span>) &#123;</div><div class="line">                    oldEntry.next = e;</div><div class="line">                    size ++;</div><div class="line">                    checkSize();</div><div class="line">                    <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">                &#125;</div><div class="line">                oldEntry = oldEntry.next;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">checkHash</span><span class="params">(Entry a, Entry b)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> !(a.hash != b.hash || a.hashA != b.hashA || a.hashB != b.hashB);</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * Tests if this hashtable maps no keys to values.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@return</span> hash table is empty or not</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isEmpty</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> size == <span class="number">0</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initCryptTable</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.cryptTable = <span class="keyword">new</span> <span class="keyword">int</span>[<span class="number">0x500</span>];</div><div class="line">        <span class="keyword">int</span> seed = <span class="number">0x00100001</span>;</div><div class="line">        <span class="keyword">int</span> index1 = <span class="number">0</span>, index2 = <span class="number">0</span>, i;</div><div class="line">        <span class="keyword">for</span> (index1 = <span class="number">0</span>; index1 &lt; <span class="number">0x100</span>; index1++) &#123;</div><div class="line">            <span class="keyword">for</span> (index2 = index1, i = <span class="number">0</span>; i &lt; <span class="number">5</span>; i++, index2 += <span class="number">0x100</span>) &#123;</div><div class="line">                <span class="keyword">int</span> temp1, temp2;</div><div class="line">                seed = (seed * <span class="number">125</span> + <span class="number">3</span>) % <span class="number">0x2AAAAB</span>;</div><div class="line">                temp1 = (seed &amp; <span class="number">0xFFFF</span>) &lt;&lt; <span class="number">0x10</span>;</div><div class="line">                seed = (seed * <span class="number">125</span> + <span class="number">3</span>) % <span class="number">0x2AAAAB</span>;</div><div class="line">                temp2 = (seed &amp; <span class="number">0xFFFF</span>);</div><div class="line">                cryptTable[index2] = (temp1 | temp2);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * Uses MPQ hash algorithm to generate a long type variable as hashed value.</div><div class="line">     * This version only accepts String.</div><div class="line">     *</div><div class="line">     * <span class="doctag">@param</span> key</div><div class="line">     *            receive a string as key in hash map.</div><div class="line">     * <span class="doctag">@return</span> returns a long type argument as hashed value</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">hash</span><span class="params">(String key, <span class="keyword">int</span> dwHashType)</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> seed1 = <span class="number">0x7FED7FED</span>, seed2 = <span class="number">0xEEEEEEEE</span>;</div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; key.length(); i++) &#123;</div><div class="line">            <span class="keyword">int</span> ch = key.charAt(i);</div><div class="line">            seed1 = cryptTable[(dwHashType &lt;&lt; <span class="number">8</span>) + ch]</div><div class="line">                    ^ (seed1 + seed2);</div><div class="line">            seed2 = ch + seed1 + seed2 + (seed2 &lt;&lt; <span class="number">5</span>) + <span class="number">3</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> seed1;</div><div class="line">    &#125;</div><div class="line">    <span class="class"><span class="keyword">class</span> <span class="title">Entry</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> hash,hashA,hashB;</div><div class="line">        Entry next;</div><div class="line">        <span class="comment">/**</span></div><div class="line">         * Creates new entry.</div><div class="line">         */</div><div class="line">        Entry(String string) &#123;</div><div class="line">            hash = hash(string, <span class="number">1</span>);</div><div class="line">            hashA = hash(string, <span class="number">2</span>);</div><div class="line">            hashB = hash(string, <span class="number">3</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getHash</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">return</span> hash;</div><div class="line">        &#125;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getHashA</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">return</span> hashA;</div><div class="line">        &#125;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getHashB</span><span class="params">()</span> </span>&#123;</div><div class="line">            <span class="keyword">return</span> hashB;</div><div class="line">        &#125;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setNext</span><span class="params">(Entry e)</span> </span>&#123;</div><div class="line">            next = e;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-        <div class="post-tags">
-          
-            <a href="/tags/暴雪哈希/" rel="tag"># 暴雪哈希</a>
-          
-        </div>
-      
-
-      
-      
-      
-
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2017/03/12/2017/如何修改Lucene索引，加速对数据的Distinct、Group By操作/" rel="next" title="如何修改Lucene索引，加速对数据的Distinct、Group By操作">
-                <i class="fa fa-chevron-left"></i> 如何修改Lucene索引，加速对数据的Distinct、Group By操作
-              </a>
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2017/06/16/2017/夜深斜月印窗纱/" rel="prev" title="夜深斜月印窗纱">
-                夜深斜月印窗纱 <i class="fa fa-chevron-right"></i>
-              </a>
-            
-          </div>
-        </div>
-      
-
-      
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-
-    <div class="post-spread">
-      
-    </div>
-  </div>
-
-
-          </div>
-          
-
-
-          
-
-  
-    <div class="comments" id="comments">
-      
-        <div id="gitment-container"></div>
-      
-    </div>
-
-  
-
-
-
+<figure class="highlight java hljs"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div><div class="line">103</div><div class="line">104</div><div class="line">105</div><div class="line">106</div><div class="line">107</div><div class="line">108</div><div class="line">109</div><div class="line">110</div><div class="line">111</div><div class="line">112</div><div class="line">113</div><div class="line">114</div><div class="line">115</div><div class="line">116</div><div class="line">117</div><div class="line">118</div><div class="line">119</div><div class="line">120</div><div class="line">121</div><div class="line">122</div><div class="line">123</div><div class="line">124</div><div class="line">125</div><div class="line">126</div><div class="line">127</div><div class="line">128</div><div class="line">129</div><div class="line">130</div><div class="line">131</div><div class="line">132</div><div class="line">133</div><div class="line">134</div><div class="line">135</div><div class="line">136</div><div class="line">137</div><div class="line">138</div><div class="line">139</div><div class="line">140</div><div class="line">141</div><div class="line">142</div><div class="line">143</div><div class="line">144</div><div class="line">145</div><div class="line">146</div><div class="line">147</div><div class="line">148</div><div class="line">149</div><div class="line">150</div></pre></td><td class="code"><pre><div class="line"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">BlizzardHashSet</span> </span>&#123;</div><div class="line">    <span class="hljs-keyword">private</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">int</span> DEFAULT_INITIAL_CAPACITY = <span class="hljs-number">200</span>;</div><div class="line">    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> size = <span class="hljs-number">0</span>;</div><div class="line">    <span class="hljs-keyword">private</span> Entry[] table;</div><div class="line">    <span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> cryptTable[];</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-title">BlizzardHashSet</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">        initTable();</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">initTable</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">int</span> capacity = DEFAULT_INITIAL_CAPACITY;</div><div class="line">        <span class="hljs-keyword">this</span>.table = <span class="hljs-keyword">new</span> Entry[capacity];</div><div class="line">        initCryptTable();</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-comment">/**</span></div><div class="line">     * return number of keys in hash table</div><div class="line">     *</div><div class="line">     * <span class="hljs-doctag">@return</span> number of keys</div><div class="line">     */</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">size</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">return</span> size;</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">checkSize</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">if</span> (<span class="hljs-number">2</span> * size &gt; table.length) &#123;</div><div class="line">            <span class="hljs-keyword">int</span> newSize = table.length &lt;&lt; <span class="hljs-number">1</span>;</div><div class="line">            Entry[] newTable = <span class="hljs-keyword">new</span> Entry[newSize];</div><div class="line">            <span class="hljs-keyword">for</span> (Entry e : table) &#123;</div><div class="line">                <span class="hljs-keyword">while</span> (e != <span class="hljs-keyword">null</span>) &#123;</div><div class="line">                    <span class="hljs-keyword">int</span> pos = Math.abs(e.getHash() % newSize);</div><div class="line">                    <span class="hljs-keyword">if</span> (newTable[pos] == <span class="hljs-keyword">null</span>) &#123;</div><div class="line">                        newTable[pos] = e;</div><div class="line">                    &#125;</div><div class="line">                    <span class="hljs-keyword">else</span> &#123;</div><div class="line">                        Entry current = newTable[pos];</div><div class="line">                        Entry next = current.next;</div><div class="line">                        <span class="hljs-keyword">do</span> &#123;</div><div class="line">                            <span class="hljs-keyword">if</span> (next == <span class="hljs-keyword">null</span>) &#123;</div><div class="line">                                current.next = e;</div><div class="line">                                <span class="hljs-keyword">break</span>;</div><div class="line">                            &#125;</div><div class="line">                            <span class="hljs-keyword">else</span> &#123;</div><div class="line">                                current = next;</div><div class="line">                                next = current.next;</div><div class="line">                            &#125;</div><div class="line">                        &#125; <span class="hljs-keyword">while</span> (<span class="hljs-keyword">true</span>);</div><div class="line">                    &#125;</div><div class="line">                    Entry temp = e.next;</div><div class="line">                    <span class="hljs-keyword">if</span> (temp != <span class="hljs-keyword">null</span>) &#123;</div><div class="line">                        e.next = <span class="hljs-keyword">null</span>;</div><div class="line">                    &#125;</div><div class="line">                    e = temp;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">            table = newTable;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">add</span><span class="hljs-params">(String str)</span> </span>&#123;</div><div class="line">        Entry e = <span class="hljs-keyword">new</span> Entry(str);</div><div class="line">        <span class="hljs-keyword">int</span> hash = e.getHash();</div><div class="line">        <span class="hljs-keyword">int</span> pos = Math.abs(hash % table.length);</div><div class="line">        <span class="hljs-keyword">if</span> (table[pos] == <span class="hljs-keyword">null</span>) &#123;</div><div class="line">            table[pos] = e;</div><div class="line">            size ++;</div><div class="line">            checkSize();</div><div class="line">            <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="hljs-keyword">else</span> &#123;</div><div class="line">            Entry oldEntry = table[pos];</div><div class="line">            <span class="hljs-keyword">while</span> (<span class="hljs-keyword">true</span>) &#123;</div><div class="line">                <span class="hljs-keyword">if</span> (checkHash(oldEntry, e)) &#123;</div><div class="line">                    <span class="hljs-keyword">return</span> <span class="hljs-keyword">false</span>;</div><div class="line">                &#125;</div><div class="line">                <span class="hljs-keyword">if</span> (oldEntry.next == <span class="hljs-keyword">null</span>) &#123;</div><div class="line">                    oldEntry.next = e;</div><div class="line">                    size ++;</div><div class="line">                    checkSize();</div><div class="line">                    <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;</div><div class="line">                &#125;</div><div class="line">                oldEntry = oldEntry.next;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">checkHash</span><span class="hljs-params">(Entry a, Entry b)</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">return</span> !(a.hash != b.hash || a.hashA != b.hashA || a.hashB != b.hashB);</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-comment">/**</span></div><div class="line">     * Tests if this hashtable maps no keys to values.</div><div class="line">     *</div><div class="line">     * <span class="hljs-doctag">@return</span> hash table is empty or not</div><div class="line">     */</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">isEmpty</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">return</span> size == <span class="hljs-number">0</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">void</span> <span class="hljs-title">initCryptTable</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">this</span>.cryptTable = <span class="hljs-keyword">new</span> <span class="hljs-keyword">int</span>[<span class="hljs-number">0x500</span>];</div><div class="line">        <span class="hljs-keyword">int</span> seed = <span class="hljs-number">0x00100001</span>;</div><div class="line">        <span class="hljs-keyword">int</span> index1 = <span class="hljs-number">0</span>, index2 = <span class="hljs-number">0</span>, i;</div><div class="line">        <span class="hljs-keyword">for</span> (index1 = <span class="hljs-number">0</span>; index1 &lt; <span class="hljs-number">0x100</span>; index1++) &#123;</div><div class="line">            <span class="hljs-keyword">for</span> (index2 = index1, i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">5</span>; i++, index2 += <span class="hljs-number">0x100</span>) &#123;</div><div class="line">                <span class="hljs-keyword">int</span> temp1, temp2;</div><div class="line">                seed = (seed * <span class="hljs-number">125</span> + <span class="hljs-number">3</span>) % <span class="hljs-number">0x2AAAAB</span>;</div><div class="line">                temp1 = (seed &amp; <span class="hljs-number">0xFFFF</span>) &lt;&lt; <span class="hljs-number">0x10</span>;</div><div class="line">                seed = (seed * <span class="hljs-number">125</span> + <span class="hljs-number">3</span>) % <span class="hljs-number">0x2AAAAB</span>;</div><div class="line">                temp2 = (seed &amp; <span class="hljs-number">0xFFFF</span>);</div><div class="line">                cryptTable[index2] = (temp1 | temp2);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-comment">/**</span></div><div class="line">     * Uses MPQ hash algorithm to generate a long type variable as hashed value.</div><div class="line">     * This version only accepts String.</div><div class="line">     *</div><div class="line">     * <span class="hljs-doctag">@param</span> key</div><div class="line">     *            receive a string as key in hash map.</div><div class="line">     * <span class="hljs-doctag">@return</span> returns a long type argument as hashed value</div><div class="line">     */</div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">private</span> <span class="hljs-keyword">int</span> <span class="hljs-title">hash</span><span class="hljs-params">(String key, <span class="hljs-keyword">int</span> dwHashType)</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">int</span> seed1 = <span class="hljs-number">0x7FED7FED</span>, seed2 = <span class="hljs-number">0xEEEEEEEE</span>;</div><div class="line">        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">int</span> i = <span class="hljs-number">0</span>; i &lt; key.length(); i++) &#123;</div><div class="line">            <span class="hljs-keyword">int</span> ch = key.charAt(i);</div><div class="line">            seed1 = cryptTable[(dwHashType &lt;&lt; <span class="hljs-number">8</span>) + ch]</div><div class="line">                    ^ (seed1 + seed2);</div><div class="line">            seed2 = ch + seed1 + seed2 + (seed2 &lt;&lt; <span class="hljs-number">5</span>) + <span class="hljs-number">3</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="hljs-keyword">return</span> seed1;</div><div class="line">    &#125;</div><div class="line">    <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Entry</span> </span>&#123;</div><div class="line">        <span class="hljs-keyword">int</span> hash,hashA,hashB;</div><div class="line">        Entry next;</div><div class="line">        <span class="hljs-comment">/**</span></div><div class="line">         * Creates new entry.</div><div class="line">         */</div><div class="line">        Entry(String string) &#123;</div><div class="line">            hash = hash(string, <span class="hljs-number">1</span>);</div><div class="line">            hashA = hash(string, <span class="hljs-number">2</span>);</div><div class="line">            hashB = hash(string, <span class="hljs-number">3</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">getHash</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">            <span class="hljs-keyword">return</span> hash;</div><div class="line">        &#125;</div><div class="line">        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">getHashA</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">            <span class="hljs-keyword">return</span> hashA;</div><div class="line">        &#125;</div><div class="line">        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">int</span> <span class="hljs-title">getHashB</span><span class="hljs-params">()</span> </span>&#123;</div><div class="line">            <span class="hljs-keyword">return</span> hashB;</div><div class="line">        &#125;</div><div class="line">        <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">setNext</span><span class="hljs-params">(Entry e)</span> </span>&#123;</div><div class="line">            next = e;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
         </div>
         
-          
-  
-  <div class="sidebar-toggle">
-    <div class="sidebar-toggle-line-wrap">
-      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
-    </div>
-  </div>
-
-  <aside id="sidebar" class="sidebar">
-    
-    <div class="sidebar-inner">
-
-      
-
-      
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
-
-      <section class="site-overview-wrap sidebar-panel">
-        <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-            
-              <img class="site-author-image" itemprop="image"
-                src="/images/user.png"
-                alt="GeekCat" />
-            
-              <p class="site-author-name" itemprop="name">GeekCat</p>
-              <p class="site-description motion-element" itemprop="description">参差多态是幸福的本源</p>
-          </div>
-
-          <nav class="site-state motion-element">
-
-            
-              <div class="site-state-item site-state-posts">
-              
-                <a href="/archives">
-              
-                  <span class="site-state-item-count">19</span>
-                  <span class="site-state-item-name">日志</span>
-                </a>
-              </div>
-            
-
-            
-              
-              
-              <div class="site-state-item site-state-categories">
-                <a href="/categories/index.html">
-                  <span class="site-state-item-count">8</span>
-                  <span class="site-state-item-name">分类</span>
-                </a>
-              </div>
-            
-
-            
-              
-              
-              <div class="site-state-item site-state-tags">
-                <a href="/tags/index.html">
-                  <span class="site-state-item-count">23</span>
-                  <span class="site-state-item-name">标签</span>
-                </a>
-              </div>
-            
-
-          </nav>
-
-          
-
-          
-            <div class="links-of-author motion-element">
-                
-                  <span class="links-of-author-item">
-                    <a href="https://github.com/guiyanakuang" target="_blank" title="GitHub">
-                      
-                        <i class="fa fa-fw fa-github"></i>GitHub</a>
-                  </span>
-                
-                  <span class="links-of-author-item">
-                    <a href="mailto:guiyanakuang@gmail.com" target="_blank" title="E-Mail">
-                      
-                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
-                  </span>
-                
-                  <span class="links-of-author-item">
-                    <a href="https://weibo.com/u/1796278124?wvr=5&wvr=5&lf=reg&is_all=1" target="_blank" title="Weibo">
-                      
-                        <i class="fa fa-fw fa-globe"></i>Weibo</a>
-                  </span>
-                
-                  <span class="links-of-author-item">
-                    <a href="https://www.zhihu.com/people/acetylcholine/activities" target="_blank" title="Zhihu">
-                      
-                        <i class="fa fa-fw fa-globe"></i>Zhihu</a>
-                  </span>
-                
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/暴雪哈希/">暴雪哈希</a>
+                </div>
             </div>
-          
-
-          
-          
-
-          
-          
-
-          
-
         </div>
-      </section>
-
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#去重器"><span class="nav-number">1.</span> <span class="nav-text">去重器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#当你碰到内存的问题"><span class="nav-number">2.</span> <span class="nav-text">当你碰到内存的问题</span></a></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
-      
-
-      
-
-    </div>
-  </aside>
-
-
         
-      </div>
-    </main>
-
-    <footer id="footer" class="footer">
-      <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
-  <span class="with-love">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">GeekCat</span>
-
-  
+        
+        
+    </div>
 </div>
 
 
-  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3>
+        <div class="buttons is-centered">
+            
+                
+<a class="button is-success donate">
+    <span class="icon is-small">
+        <i class="fab fa-weixin"></i>
+    </span>
+    <span>微信</span>
+    <div class="qrcode"><img src="http://localhost:4000/images/wechat_qrcode.png" alt="微信"></div>
+</a>
+
+                
+        </div>
+    </div>
+</div>
 
 
 
-  <span class="post-meta-divider">|</span>
-
-
-
-  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
-
-
-
-
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
         
-
-
-
-
-
-
-
+        <div class="level-start">
+            <a class="level level-item has-link-grey  article-nav-prev" href="/2017/06/16/2017/夜深斜月印窗纱/">
+                <i class="level-item fas fa-chevron-left"></i>
+                <span class="level-item">夜深斜月印窗纱</span>
+            </a>
+        </div>
         
-      </div>
-    </footer>
+        
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2017/03/12/2017/如何修改Lucene索引，加速对数据的Distinct、Group By操作/">
+                <span class="level-item">如何修改Lucene索引，加速对数据的Distinct、Group By操作</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+</div>
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-1 column-left ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered">
+                <div>
+                    <img class="image is-128x128 has-mb-6" src="/images/user.png" alt="GeekCat">
+                    
+                    <p class="is-size-4 is-block">
+                        GeekCat
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        参差多态是幸福的本源
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>深圳</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        19
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        8
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        22
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/guiyanakuang">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/guiyanakuang">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Zhihu" href="https://www.zhihu.com/people/acetylcholine/activities">
+                
+                <i class="fab fa-zhihu"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Weibo" href="https://weibo.com/u/1796278124">
+                
+                <i class="fab fa-weibo"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="RSS" href="/">
+                
+                <i class="fas fa-rss"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+    
+        
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            <li>
+        <a class="level is-marginless" href="/categories/review/">
+            <span class="level-start">
+                <span class="level-item">review</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/广州/">
+            <span class="level-start">
+                <span class="level-item">广州</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">2</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/开发/">
+            <span class="level-start">
+                <span class="level-item">开发</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">2</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/思考/">
+            <span class="level-start">
+                <span class="level-item">思考</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/技术/">
+            <span class="level-start">
+                <span class="level-item">技术</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">10</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/江湖/">
+            <span class="level-start">
+                <span class="level-item">江湖</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/珠海/">
+            <span class="level-start">
+                <span class="level-item">珠海</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/财大/">
+            <span class="level-start">
+                <span class="level-item">财大</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/AIO/" style="font-size: 10px;">AIO</a> <a href="/tags/ANTLR/" style="font-size: 15px;">ANTLR</a> <a href="/tags/Android/" style="font-size: 10px;">Android</a> <a href="/tags/Elasticsearch/" style="font-size: 15px;">Elasticsearch</a> <a href="/tags/Groovy/" style="font-size: 10px;">Groovy</a> <a href="/tags/Java/" style="font-size: 10px;">Java</a> <a href="/tags/Kafka/" style="font-size: 10px;">Kafka</a> <a href="/tags/Lucene/" style="font-size: 15px;">Lucene</a> <a href="/tags/PHP/" style="font-size: 10px;">PHP</a> <a href="/tags/svg/" style="font-size: 10px;">svg</a> <a href="/tags/前端/" style="font-size: 10px;">前端</a> <a href="/tags/异步/" style="font-size: 10px;">异步</a> <a href="/tags/感/" style="font-size: 20px;">感</a> <a href="/tags/技术/" style="font-size: 10px;">技术</a> <a href="/tags/日志索引/" style="font-size: 10px;">日志索引</a> <a href="/tags/暴雪哈希/" style="font-size: 10px;">暴雪哈希</a> <a href="/tags/源码/" style="font-size: 10px;">源码</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a> <a href="/tags/索引/" style="font-size: 10px;">索引</a> <a href="/tags/逆向/" style="font-size: 10px;">逆向</a> <a href="/tags/面经/" style="font-size: 10px;">面经</a> <a href="/tags/领域语言/" style="font-size: 15px;">领域语言</a>
+    </div>
+</div>
 
     
-      <div class="back-to-top">
-        <i class="fa fa-arrow-up"></i>
+    
+        <div class="column-right-shadow is-hidden-widescreen ">
         
-      </div>
+            
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2018/01/28/2018/Android逆向实践/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="Android逆向实践">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-01-28T05:58:00.000Z">2018-01-28</time></div>
+                    <a href="/2018/01/28/2018/Android逆向实践/" class="has-link-black-ter is-size-6">Android逆向实践</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="构建自己的日志索引系统（序言）">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-12-23T15:52:00.000Z">2017-12-23</time></div>
+                    <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="has-link-black-ter is-size-6">构建自己的日志索引系统（序言）</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/23/2017/台风过后一片狼藉/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="台风过后一片狼藉">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-23T13:53:24.000Z">2017-08-23</time></div>
+                    <a href="/2017/08/23/2017/台风过后一片狼藉/" class="has-link-black-ter is-size-6">台风过后一片狼藉</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/珠海/">珠海</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="前人挖坑后人被埋">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-20T12:08:00.000Z">2017-08-20</time></div>
+                    <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="has-link-black-ter is-size-6">前人挖坑后人被埋</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="怎样去最大化Elasticsearch索引性能(第一部分)">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-07-22T17:20:36.000Z">2017-07-23</time></div>
+                    <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="has-link-black-ter is-size-6">怎样去最大化Elasticsearch索引性能(第一部分)</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/08/">
+                <span class="level-start">
+                    <span class="level-item">八月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/06/">
+                <span class="level-start">
+                    <span class="level-item">六月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">3</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">4</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2015/11/">
+                <span class="level-start">
+                    <span class="level-item">十一月 2015</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/AIO/">
+                        <span class="level-start">
+                            <span class="level-item">AIO</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/ANTLR/">
+                        <span class="level-start">
+                            <span class="level-item">ANTLR</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Android/">
+                        <span class="level-start">
+                            <span class="level-item">Android</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Elasticsearch/">
+                        <span class="level-start">
+                            <span class="level-item">Elasticsearch</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Groovy/">
+                        <span class="level-start">
+                            <span class="level-item">Groovy</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Java/">
+                        <span class="level-start">
+                            <span class="level-item">Java</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Kafka/">
+                        <span class="level-start">
+                            <span class="level-item">Kafka</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Lucene/">
+                        <span class="level-start">
+                            <span class="level-item">Lucene</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/PHP/">
+                        <span class="level-start">
+                            <span class="level-item">PHP</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/svg/">
+                        <span class="level-start">
+                            <span class="level-item">svg</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/前端/">
+                        <span class="level-start">
+                            <span class="level-item">前端</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/异步/">
+                        <span class="level-start">
+                            <span class="level-item">异步</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/感/">
+                        <span class="level-start">
+                            <span class="level-item">感</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">6</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/日志索引/">
+                        <span class="level-start">
+                            <span class="level-item">日志索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/暴雪哈希/">
+                        <span class="level-start">
+                            <span class="level-item">暴雪哈希</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/源码/">
+                        <span class="level-start">
+                            <span class="level-item">源码</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/爬虫/">
+                        <span class="level-start">
+                            <span class="level-item">爬虫</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/索引/">
+                        <span class="level-start">
+                            <span class="level-item">索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/逆向/">
+                        <span class="level-start">
+                            <span class="level-item">逆向</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/面经/">
+                        <span class="level-start">
+                            <span class="level-item">面经</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/领域语言/">
+                        <span class="level-start">
+                            <span class="level-item">领域语言</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        </div>
+    
+</div>
+
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen is-hidden-touch is-hidden-desktop-only has-order-3 column-right ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2018/01/28/2018/Android逆向实践/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="Android逆向实践">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-01-28T05:58:00.000Z">2018-01-28</time></div>
+                    <a href="/2018/01/28/2018/Android逆向实践/" class="has-link-black-ter is-size-6">Android逆向实践</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="构建自己的日志索引系统（序言）">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-12-23T15:52:00.000Z">2017-12-23</time></div>
+                    <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="has-link-black-ter is-size-6">构建自己的日志索引系统（序言）</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/23/2017/台风过后一片狼藉/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="台风过后一片狼藉">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-23T13:53:24.000Z">2017-08-23</time></div>
+                    <a href="/2017/08/23/2017/台风过后一片狼藉/" class="has-link-black-ter is-size-6">台风过后一片狼藉</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/珠海/">珠海</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="前人挖坑后人被埋">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-20T12:08:00.000Z">2017-08-20</time></div>
+                    <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="has-link-black-ter is-size-6">前人挖坑后人被埋</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="怎样去最大化Elasticsearch索引性能(第一部分)">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-07-22T17:20:36.000Z">2017-07-23</time></div>
+                    <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="has-link-black-ter is-size-6">怎样去最大化Elasticsearch索引性能(第一部分)</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/08/">
+                <span class="level-start">
+                    <span class="level-item">八月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/06/">
+                <span class="level-start">
+                    <span class="level-item">六月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">3</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">4</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2015/11/">
+                <span class="level-start">
+                    <span class="level-item">十一月 2015</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/AIO/">
+                        <span class="level-start">
+                            <span class="level-item">AIO</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/ANTLR/">
+                        <span class="level-start">
+                            <span class="level-item">ANTLR</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Android/">
+                        <span class="level-start">
+                            <span class="level-item">Android</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Elasticsearch/">
+                        <span class="level-start">
+                            <span class="level-item">Elasticsearch</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Groovy/">
+                        <span class="level-start">
+                            <span class="level-item">Groovy</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Java/">
+                        <span class="level-start">
+                            <span class="level-item">Java</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Kafka/">
+                        <span class="level-start">
+                            <span class="level-item">Kafka</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Lucene/">
+                        <span class="level-start">
+                            <span class="level-item">Lucene</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/PHP/">
+                        <span class="level-start">
+                            <span class="level-item">PHP</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/svg/">
+                        <span class="level-start">
+                            <span class="level-item">svg</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/前端/">
+                        <span class="level-start">
+                            <span class="level-item">前端</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/异步/">
+                        <span class="level-start">
+                            <span class="level-item">异步</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/感/">
+                        <span class="level-start">
+                            <span class="level-item">感</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">6</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/日志索引/">
+                        <span class="level-start">
+                            <span class="level-item">日志索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/暴雪哈希/">
+                        <span class="level-start">
+                            <span class="level-item">暴雪哈希</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/源码/">
+                        <span class="level-start">
+                            <span class="level-item">源码</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/爬虫/">
+                        <span class="level-start">
+                            <span class="level-item">爬虫</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/索引/">
+                        <span class="level-start">
+                            <span class="level-item">索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/逆向/">
+                        <span class="level-start">
+                            <span class="level-item">逆向</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/面经/">
+                        <span class="level-start">
+                            <span class="level-item">面经</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/领域语言/">
+                        <span class="level-start">
+                            <span class="level-item">领域语言</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+</div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/user.png" alt="暴雪哈希去重器" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2019 GeekCat&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a href="http://github.com/ppoffice/hexo-theme-icarus">Icarus</a>
+                </p>
+            </div>
+            <div class="level-end">
+            
+                <div class="field has-addons is-flex-center-mobile has-mt-5-mobile is-flex-wrap is-flex-middle">
+                
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Creative Commons" href="https://creativecommons.org/">
+                        
+                        <i class="fab fa-creative-commons"></i>
+                        
+                    </a>
+                </p>
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Attribution 4.0 International" href="https://creativecommons.org/licenses/by/4.0/">
+                        
+                        <i class="fab fa-creative-commons-by"></i>
+                        
+                    </a>
+                </p>
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Download on GitHub" href="http://github.com/ppoffice/hexo-theme-icarus">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                </p>
+                
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
     
 
     
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
 
-  </div>
+    
+    
 
-  
-
-<script type="text/javascript">
-  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
-    window.Promise = null;
-  }
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
 </script>
 
 
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
-  
-
-
-  
-
-
-  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
-
-
-
-  
-  
-
-
-  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
-
-
-
-  
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
-
-
-
-  
-
-
-  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
-
-
-
-  
-
-
-  
-
-
-
-
-	
-
-
-
-
-
-  
-
-
-
-
-
-  
-
-
-
-
-
-
-
-<!-- LOCAL: You can save these files to your site and update links -->
     
-        
-        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
-        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
     
-<!-- END LOCAL -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {matchFontHeight: false},
+        SVG: {matchFontHeight: false},
+        CommonHTML: {matchFontHeight: false}
+    });
+});
+</script>
 
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
     
 
     
-      <script type="text/javascript">
-      function renderGitment(){
-        var gitment = new Gitmint({
-            id: window.location.pathname, 
-            owner: 'guiyanakuang',
-            repo: 'guiyanakuang.github.io',
-            
-            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
-            
-            oauth: {
-            
-            
-                client_secret: 'b2ecdf5b33a642fff2992946222a7fedaf8c5ead',
-            
-                client_id: '3d20fb6ae7049de0d2d0'
-            }});
-        gitment.render('gitment-container');
-      }
+    
+    
+    
 
-      
-      renderGitment();
-      
-      </script>
+    
+    
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script>
+    <script src="/js/clipboard.js" defer></script>
+    
+
     
 
 
+<script src="/js/main.js" defer></script>
 
-
-
-
-
-  
-
-
-
-
-
-  
-
-  
-
-  
-
-  
-  
-
-  
-
-  
-
-  
-
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
 </body>
 </html>

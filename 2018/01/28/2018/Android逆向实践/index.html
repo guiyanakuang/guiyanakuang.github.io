@@ -1,95 +1,24 @@
 <!DOCTYPE html>
+<html lang="zh">
+<head><meta name="generator" content="Hexo 3.8.0">
+    <meta charset="utf-8">
+<title>Android逆向实践 - GeekPig的脑窝</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 
 
-  
-
-
-<html class="theme-next pisces use-motion" lang="zh-Hans">
-<head>
-  <meta charset="UTF-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-<meta name="theme-color" content="#222">
-
-
-
-
-
-
-
-
-
-<meta http-equiv="Cache-Control" content="no-transform" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
-
-
-
-
-
-
-
-<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
-
-<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
-
-
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
-
-
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
-
-
-  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
-
-
-
-
-
-  <meta name="keywords" content="逆向,Android," />
-
-
-
-
-
-
-
-
-
-
-<meta name="description" content="本文记录一下最近逆向一款 Andoird 应用，获取相关数据的的实践思路与过程。希望对有类似需求的同学有所帮助。 爬取 Web 站点相比爬取 Android 应用要简单一些，原因是通过浏览器调试，你可以比较方便的查看资源的请求信息，request 与 response 都比较清晰，而对于一个 Android 应用就比较难以调试了，首先代码进行了混淆，即便反编译，还是很难理解。抓包是一个很好的思路，">
+    <meta name="description" content="本文记录一下最近逆向一款 Andoird 应用，获取相关数据的的实践思路与过程。希望对有类似需求的同学有所帮助。 爬取 Web 站点相比爬取 Android 应用要简单一些，原因是通过浏览器调试，你可以比较方便的查看资源的请求信息，request 与 response 都比较清晰，而对于一个 Android 应用就比较难以调试了，首先代码进行了混淆，即便反编译，还是很难理解。抓包是一个很好的思路，">
 <meta name="keywords" content="逆向,Android">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android逆向实践">
 <meta property="og:url" content="http://geekcat.me/2018/01/28/2018/Android逆向实践/index.html">
 <meta property="og:site_name" content="GeekPig的脑窝">
 <meta property="og:description" content="本文记录一下最近逆向一款 Andoird 应用，获取相关数据的的实践思路与过程。希望对有类似需求的同学有所帮助。 爬取 Web 站点相比爬取 Android 应用要简单一些，原因是通过浏览器调试，你可以比较方便的查看资源的请求信息，request 与 response 都比较清晰，而对于一个 Android 应用就比较难以调试了，首先代码进行了混淆，即便反编译，还是很难理解。抓包是一个很好的思路，">
+<meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://geekcat.me/images/apktool_dir.png">
 <meta property="og:image" content="http://geekcat.me/images/Xposed_installer.png">
 <meta property="og:image" content="http://geekcat.me/images/dependencies_complier_only.png">
-<meta property="og:updated_time" content="2018-01-31T06:51:33.000Z">
+<meta property="og:updated_time" content="2019-01-12T12:42:45.913Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Android逆向实践">
 <meta name="twitter:description" content="本文记录一下最近逆向一款 Andoird 应用，获取相关数据的的实践思路与过程。希望对有类似需求的同学有所帮助。 爬取 Web 站点相比爬取 Android 应用要简单一些，原因是通过浏览器调试，你可以比较方便的查看资源的请求信息，request 与 response 都比较清晰，而对于一个 Android 应用就比较难以调试了，首先代码进行了混淆，即便反编译，还是很难理解。抓包是一个很好的思路，">
@@ -97,714 +26,1595 @@
 
 
 
-<script type="text/javascript" id="hexo.configurations">
-  var NexT = window.NexT || {};
-  var CONFIG = {
-    root: '/',
-    scheme: 'Pisces',
-    version: '5.1.4',
-    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
-    fancybox: true,
-    tabs: true,
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
-    duoshuo: {
-      userId: '0',
-      author: '博主'
-    },
-    algolia: {
-      applicationID: '',
-      apiKey: '',
-      indexName: '',
-      hits: {"per_page":10},
-      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
-    }
-  };
-</script>
 
 
-
-  <link rel="canonical" href="http://geekcat.me/2018/01/28/2018/Android逆向实践/"/>
-
+<link rel="icon" href="/images/favicon.svg">
 
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.7.2/css/bulma.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.4.1/css/all.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:400,600|Source+Code+Pro">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@9.12.0/styles/tomorrow-night-eighties.css">
 
 
-  <title>Android逆向实践 | GeekPig的脑窝</title>
-  
+    
+    
+    
+    <style>body>.footer,body>.navbar,body>.section{opacity:0}</style>
+    
+
+    
+    
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/css/lightgallery.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/css/justifiedGallery.min.css">
+    
+
+    
+    
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.css">
 
 
+    
+    
+    
+    
+
+<link rel="stylesheet" href="/css/back-to-top.css">
 
 
+    
+    
+
+    
+    
+    
+    
+
+    
+    
+<link rel="stylesheet" href="/css/progressbar.css">
+<script src="https://cdn.jsdelivr.net/npm/pace-js@1.0.2/pace.min.js"></script>
+
+    
+    
+    
+
+    
 
 
-
-
+<link rel="stylesheet" href="/css/style.css">
 </head>
-
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
-
-  
-  
-    
-  
-
-  <div class="container sidebar-position-left page-post-detail">
-    <div class="headband"></div>
-
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-wrapper">
-  <div class="site-meta ">
-    
-
-    <div class="custom-logo-site-title">
-      <a href="/"  class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">GeekPig的脑窝</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-      
-        <p class="site-subtitle">Isabelita 就是正义</p>
-      
-  </div>
-
-  <div class="site-nav-toggle">
-    <button>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-    </button>
-  </div>
-</div>
-
-<nav class="site-nav">
-  
-
-  
-    <ul id="menu" class="menu">
-      
-        
-        <li class="menu-item menu-item-home">
-          <a href="/" rel="section">
+<body class="is-3-column">
+    <nav class="navbar navbar-main">
+    <div class="container">
+        <div class="navbar-brand is-flex-center">
+            <a class="navbar-item navbar-logo" href="/">
             
-              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+                <img src="/images/user.png" alt="Android逆向实践" height="28">
             
-            首页
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-archives">
-          <a href="/archives" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
-            
-            归档
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-categories">
-          <a href="/categories" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
-            
-            分类
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-tags">
-          <a href="/tags" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
-            
-            标签
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-about">
-          <a href="/about" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
-            
-            关于
-          </a>
-        </li>
-      
-
-      
-    </ul>
-  
-
-  
-</nav>
-
-
-
- </div>
-    </header>
-
-    <main id="main" class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          <div id="content" class="content">
-            
-
-  <div id="posts" class="posts-expand">
-    
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://geekcat.me/2018/01/28/2018/Android逆向实践/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="GeekCat">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/user.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="GeekPig的脑窝">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">Android逆向实践</h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-28T13:58:00+08:00">
-                2018-01-28
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/技术/" itemprop="url" rel="index">
-                    <span itemprop="name">技术</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/01/28/2018/Android逆向实践/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count gitment-comments-count" data-xid="/2018/01/28/2018/Android逆向实践/" itemprop="commentsCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+            </a>
         </div>
-      </header>
+        <div class="navbar-menu">
+            
+            <div class="navbar-start">
+                
+                <a class="navbar-item" href="/">主页</a>
+                
+                <a class="navbar-item" href="/archives">归档</a>
+                
+                <a class="navbar-item" href="/categories">分类</a>
+                
+                <a class="navbar-item" href="/tags">标签</a>
+                
+                <a class="navbar-item" href="/about">关于</a>
+                
+            </div>
+            
+            <div class="navbar-end">
+                
+                    
+                    
+                    <a class="navbar-item" target="_blank" title="Download on GitHub" href="https://github.com/guiyanakuang">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                    
+                
+                
+                
+                <a class="navbar-item search" title="搜索" href="javascript:;">
+                    <i class="fas fa-search"></i>
+                </a>
+                
+            </div>
+        </div>
+    </div>
+</nav>
     
-
+    <section class="section">
+        <div class="container">
+            <div class="columns">
+                <div class="column is-8-tablet is-8-desktop is-6-widescreen has-order-2 column-main"><div class="card">
     
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        <p>本文记录一下最近逆向一款 Andoird 应用，获取相关数据的的实践思路与过程。希望对有类似需求的同学有所帮助。</p>
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2018-01-28T05:58:00.000Z">2018-01-28</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                </div>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    9 分钟 读完 (大约 1368 个字)
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                Android逆向实践
+            
+        </h1>
+        <div class="content">
+            <p>本文记录一下最近逆向一款 Andoird 应用，获取相关数据的的实践思路与过程。希望对有类似需求的同学有所帮助。</p>
 <p>爬取 Web 站点相比爬取 Android 应用要简单一些，原因是通过浏览器调试，你可以比较方便的查看资源的请求信息，request 与 response 都比较清晰，而对于一个 Android 应用就比较难以调试了，首先代码进行了混淆，即便反编译，还是很难理解。抓包是一个很好的思路，但是对于加密的数据包，需要应用内部相应的解码函数你才能获取到明文，不像 web 应用 JS 的解码函数也一览无遗。对于这种情况以下是我的思路与实践方式。</p>
 <p>虽然代码混淆了，有总比没有好，先用解压 APK 文件得到如图的文件夹。</p>
-<img src="/images/apktool_dir.png"> <br>DEX 文件其实就是 Android dalvik 虚拟机的执行文件，类比普通 Java 程序编译出的字节码。可以看出这里有多个 DEX 文件说明这个应用的方法比较多，超过了 65535 进行了拆分。接下来使用 dex2jar 工具将 DEX 文件转化为 Jar 包。<code>d2j-dex2jar.sh class*.dex</code> 这将生成四个对应的 Jar 包，我为了阅读方便将四个 Jar 包进行解压目录合并。使用 IDEA 或者其他工具打开就可以看到反编译的代码了，一般应用都会进行混淆，这里包名类名大多都替换成了 a b c …，基本是没法阅读的。<br><br>完成了第一步代码的反编译，接下来要找到获取你想要的数据的入口，怎么办呢？<code>adb shell dumpsys activity activities</code> 来帮忙。这条命令将会打印出整个系统里的任务栈，你先讲模拟器，或者真机跳跃到你需要爬取数据的相应页面，通过命令打印出任务栈，在之前解压的目录名其实就是这个应用的前缀包名，对任务栈进行搜索，就可以确定当前页面 Activity 的名称了。这里你要知道带界面的应用的代码结构离不开 MVC 的设计。你已经确定了 V 层的代码路径，相应的 M 层的代码也不会太远，进行一些分析可以确定一些可疑的数据类（关注 Activity 混淆后的代码的 import 也有帮助）。这时候就需要想办法 hook 函数输出点什么来确定自己的猜测了。<br><br>轮到 Xposed 登场，这是一个强大的 Android hook 框架，它的原理是替换 <code>/system/bin/app_process</code> 系统文件从而控制 zygote 进程，使得系统启动是会加载 XposedBridge.jar 这个 jar 包。劫持 Dalvik 虚拟机，它将替换原本的类加载器，在加载类时添加 hook。<a href="http://repo.xposed.info/module/de.robv.android.xposed.installer" target="_blank" rel="external">http://repo.xposed.info/module/de.robv.android.xposed.installer</a> 官网进行下载，注意这里需要区分 Android 系统的版本，5.0之后的 Android 系统修改了加载 DEX 的方式。我使用了网易的MUMU模拟器，是4.4版本的系统，DEX 是分批加载的。首先在模拟器里按照相应的 Xposed installer。<br><br><img src="/images/Xposed_installer.png"> <br>点击框架以激活框架，实际就是替换之前说的系统文件。那我们就要开始开发相应的 hook 模块了。<a href="https://github.com/rovo89/XposedInstaller/releases" target="_blank" rel="external">https://github.com/rovo89/XposedInstaller/releases</a> 下载相应的模块开发依赖 jar 包。<br><br><img src="/images/dependencies_complier_only.png"> <br>这里需要注意的是在 Android Studio 中选择使用 complie_only ，如果把这个依赖包一起打包进入自己的 hook apk 将会与 Xposed 自带的 jar 发生冲突。<br><br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> <span class="keyword">implements</span> <span class="title">IXposedHookLoadPackage</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handleLoadPackage</span><span class="params">(XC_LoadPackage.LoadPackageParam loadPackageParam)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">        <span class="keyword">if</span> (!loadPackageParam.packageName.equals(<span class="string">"package name"</span>)) &#123; <span class="comment">//替换你你需要 hook 的应用包名</span></div><div class="line">            <span class="keyword">return</span>;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        XposedBridge.log(<span class="string">"Loaded app:"</span> + loadPackageParam.packageName);</div><div class="line"></div><div class="line">        <span class="keyword">final</span> String className = <span class="string">"model class name"</span>; <span class="comment">//替换你你需要 hook 的数据模型类名</span></div><div class="line"></div><div class="line"></div><div class="line">        XposedHelpers.findAndHookMethod(Application.class, <span class="string">"attach"</span>, Context.class, <span class="keyword">new</span> XC_MethodHook() &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">afterHookedMethod</span><span class="params">(MethodHookParam param)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">                ClassLoader cl = ((Context)param.args[<span class="number">0</span>]).getClassLoader();</div><div class="line">                <span class="keyword">final</span> Class&lt;?&gt; hookClass;</div><div class="line">                <span class="keyword">try</span> &#123;</div><div class="line">                    hookClass = cl.loadClass(className);</div><div class="line">                &#125; <span class="keyword">catch</span> (Exception e) &#123;</div><div class="line">                    XposedBridge.log(<span class="string">"no find "</span> + className);</div><div class="line">                    <span class="keyword">return</span>;</div><div class="line">                &#125;</div><div class="line"></div><div class="line"></div><div class="line">                XposedHelpers.findAndHookMethod(hookClass, <span class="string">"setContent"</span>, String.class, <span class="keyword">new</span> XC_MethodHook()&#123;</div><div class="line">                    <span class="meta">@Override</span></div><div class="line">                    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">afterHookedMethod</span><span class="params">(MethodHookParam param)</span> <span class="keyword">throws</span> Throwable </span>&#123;</div><div class="line">                        XposedBridge.log(<span class="string">"find "</span> + className);</div><div class="line"></div><div class="line">                        XposedBridge.log(<span class="string">"param = "</span> + param.args[<span class="number">0</span>].toString());</div><div class="line">                    &#125;</div><div class="line">                &#125;);</div><div class="line"></div><div class="line">            &#125;</div><div class="line">        &#125;);</div><div class="line"></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<img src="/images/apktool_dir.png"> <br>DEX 文件其实就是 Android dalvik 虚拟机的执行文件，类比普通 Java 程序编译出的字节码。可以看出这里有多个 DEX 文件说明这个应用的方法比较多，超过了 65535 进行了拆分。接下来使用 dex2jar 工具将 DEX 文件转化为 Jar 包。<code>d2j-dex2jar.sh class*.dex</code> 这将生成四个对应的 Jar 包，我为了阅读方便将四个 Jar 包进行解压目录合并。使用 IDEA 或者其他工具打开就可以看到反编译的代码了，一般应用都会进行混淆，这里包名类名大多都替换成了 a b c …，基本是没法阅读的。<br><br>完成了第一步代码的反编译，接下来要找到获取你想要的数据的入口，怎么办呢？<code>adb shell dumpsys activity activities</code> 来帮忙。这条命令将会打印出整个系统里的任务栈，你先讲模拟器，或者真机跳跃到你需要爬取数据的相应页面，通过命令打印出任务栈，在之前解压的目录名其实就是这个应用的前缀包名，对任务栈进行搜索，就可以确定当前页面 Activity 的名称了。这里你要知道带界面的应用的代码结构离不开 MVC 的设计。你已经确定了 V 层的代码路径，相应的 M 层的代码也不会太远，进行一些分析可以确定一些可疑的数据类（关注 Activity 混淆后的代码的 import 也有帮助）。这时候就需要想办法 hook 函数输出点什么来确定自己的猜测了。<br><br>轮到 Xposed 登场，这是一个强大的 Android hook 框架，它的原理是替换 <code>/system/bin/app_process</code> 系统文件从而控制 zygote 进程，使得系统启动是会加载 XposedBridge.jar 这个 jar 包。劫持 Dalvik 虚拟机，它将替换原本的类加载器，在加载类时添加 hook。<a href="http://repo.xposed.info/module/de.robv.android.xposed.installer" target="_blank" rel="external">http://repo.xposed.info/module/de.robv.android.xposed.installer</a> 官网进行下载，注意这里需要区分 Android 系统的版本，5.0之后的 Android 系统修改了加载 DEX 的方式。我使用了网易的MUMU模拟器，是4.4版本的系统，DEX 是分批加载的。首先在模拟器里按照相应的 Xposed installer。<br><br><img src="/images/Xposed_installer.png"> <br>点击框架以激活框架，实际就是替换之前说的系统文件。那我们就要开始开发相应的 hook 模块了。<a href="https://github.com/rovo89/XposedInstaller/releases" target="_blank" rel="external">https://github.com/rovo89/XposedInstaller/releases</a> 下载相应的模块开发依赖 jar 包。<br><br><img src="/images/dependencies_complier_only.png"> <br>这里需要注意的是在 Android Studio 中选择使用 complie_only ，如果把这个依赖包一起打包进入自己的 hook apk 将会与 Xposed 自带的 jar 发生冲突。<br><br><figure class="highlight java hljs"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Main</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">IXposedHookLoadPackage</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="hljs-meta">@Override</span></div><div class="line">    <span class="hljs-function"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">handleLoadPackage</span><span class="hljs-params">(XC_LoadPackage.LoadPackageParam loadPackageParam)</span> <span class="hljs-keyword">throws</span> Throwable </span>&#123;</div><div class="line">        <span class="hljs-keyword">if</span> (!loadPackageParam.packageName.equals(<span class="hljs-string">"package name"</span>)) &#123; <span class="hljs-comment">//替换你你需要 hook 的应用包名</span></div><div class="line">            <span class="hljs-keyword">return</span>;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        XposedBridge.log(<span class="hljs-string">"Loaded app:"</span> + loadPackageParam.packageName);</div><div class="line"></div><div class="line">        <span class="hljs-keyword">final</span> String className = <span class="hljs-string">"model class name"</span>; <span class="hljs-comment">//替换你你需要 hook 的数据模型类名</span></div><div class="line"></div><div class="line"></div><div class="line">        XposedHelpers.findAndHookMethod(Application.class, <span class="hljs-string">"attach"</span>, Context.class, <span class="hljs-keyword">new</span> XC_MethodHook() &#123;</div><div class="line">            <span class="hljs-meta">@Override</span></div><div class="line">            <span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">afterHookedMethod</span><span class="hljs-params">(MethodHookParam param)</span> <span class="hljs-keyword">throws</span> Throwable </span>&#123;</div><div class="line">                ClassLoader cl = ((Context)param.args[<span class="hljs-number">0</span>]).getClassLoader();</div><div class="line">                <span class="hljs-keyword">final</span> Class&lt;?&gt; hookClass;</div><div class="line">                <span class="hljs-keyword">try</span> &#123;</div><div class="line">                    hookClass = cl.loadClass(className);</div><div class="line">                &#125; <span class="hljs-keyword">catch</span> (Exception e) &#123;</div><div class="line">                    XposedBridge.log(<span class="hljs-string">"no find "</span> + className);</div><div class="line">                    <span class="hljs-keyword">return</span>;</div><div class="line">                &#125;</div><div class="line"></div><div class="line"></div><div class="line">                XposedHelpers.findAndHookMethod(hookClass, <span class="hljs-string">"setContent"</span>, String.class, <span class="hljs-keyword">new</span> XC_MethodHook()&#123;</div><div class="line">                    <span class="hljs-meta">@Override</span></div><div class="line">                    <span class="hljs-function"><span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">afterHookedMethod</span><span class="hljs-params">(MethodHookParam param)</span> <span class="hljs-keyword">throws</span> Throwable </span>&#123;</div><div class="line">                        XposedBridge.log(<span class="hljs-string">"find "</span> + className);</div><div class="line"></div><div class="line">                        XposedBridge.log(<span class="hljs-string">"param = "</span> + param.args[<span class="hljs-number">0</span>].toString());</div><div class="line">                    &#125;</div><div class="line">                &#125;);</div><div class="line"></div><div class="line">            &#125;</div><div class="line">        &#125;);</div><div class="line"></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>由于我是在4.4版本下进行 hook 这里是分批进行 DEX 文件加载的，如果直接进行 <code>XposedHelpers.findAndHookMethod</code> 可能会发生 class not found 的情况，所以这里先进行了 <code>Application.class attach</code> 方法的 hook，在确定了应用上下文已经加载后在进行对应目标的 hook，Xposed 提供了许多 hook 方法这里示例 hook 两个函数，实际上还可以 hook 构造函数等等，详细可以阅读对应的 <a href="http://api.xposed.info/" target="_blank" rel="external">Api</a>。</p>
 <p>接下来启动需要 hook 的应用，就可以在 Xposed 日志页面查看输出，通过输出就可以验证之前的猜测，成功之后就可以依照此法摸清这个调用链，将相应的代码脱离出来，进行爬取。有时间我在更新一部分如何 hook native 的时间。</p>
 
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-        <div class="post-tags">
-          
-            <a href="/tags/逆向/" rel="tag"># 逆向</a>
-          
-            <a href="/tags/Android/" rel="tag"># Android</a>
-          
-        </div>
-      
-
-      
-      
-      
-
-      
-        <div class="post-nav">
-          <div class="post-nav-next post-nav-item">
-            
-              <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" rel="next" title="构建自己的日志索引系统（序言）">
-                <i class="fa fa-chevron-left"></i> 构建自己的日志索引系统（序言）
-              </a>
-            
-          </div>
-
-          <span class="post-nav-divider"></span>
-
-          <div class="post-nav-prev post-nav-item">
-            
-          </div>
-        </div>
-      
-
-      
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-
-    <div class="post-spread">
-      
-    </div>
-  </div>
-
-
-          </div>
-          
-
-
-          
-
-  
-    <div class="comments" id="comments">
-      
-        <div id="gitment-container"></div>
-      
-    </div>
-
-  
-
-
-
         </div>
         
-          
-  
-  <div class="sidebar-toggle">
-    <div class="sidebar-toggle-line-wrap">
-      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
-    </div>
-  </div>
-
-  <aside id="sidebar" class="sidebar">
-    
-    <div class="sidebar-inner">
-
-      
-
-      
-
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
-        <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-            
-              <img class="site-author-image" itemprop="image"
-                src="/images/user.png"
-                alt="GeekCat" />
-            
-              <p class="site-author-name" itemprop="name">GeekCat</p>
-              <p class="site-description motion-element" itemprop="description">参差多态是幸福的本源</p>
-          </div>
-
-          <nav class="site-state motion-element">
-
-            
-              <div class="site-state-item site-state-posts">
-              
-                <a href="/archives">
-              
-                  <span class="site-state-item-count">19</span>
-                  <span class="site-state-item-name">日志</span>
-                </a>
-              </div>
-            
-
-            
-              
-              
-              <div class="site-state-item site-state-categories">
-                <a href="/categories/index.html">
-                  <span class="site-state-item-count">8</span>
-                  <span class="site-state-item-name">分类</span>
-                </a>
-              </div>
-            
-
-            
-              
-              
-              <div class="site-state-item site-state-tags">
-                <a href="/tags/index.html">
-                  <span class="site-state-item-count">23</span>
-                  <span class="site-state-item-name">标签</span>
-                </a>
-              </div>
-            
-
-          </nav>
-
-          
-
-          
-            <div class="links-of-author motion-element">
-                
-                  <span class="links-of-author-item">
-                    <a href="https://github.com/guiyanakuang" target="_blank" title="GitHub">
-                      
-                        <i class="fa fa-fw fa-github"></i>GitHub</a>
-                  </span>
-                
-                  <span class="links-of-author-item">
-                    <a href="mailto:guiyanakuang@gmail.com" target="_blank" title="E-Mail">
-                      
-                        <i class="fa fa-fw fa-envelope"></i>E-Mail</a>
-                  </span>
-                
-                  <span class="links-of-author-item">
-                    <a href="https://weibo.com/u/1796278124?wvr=5&wvr=5&lf=reg&is_all=1" target="_blank" title="Weibo">
-                      
-                        <i class="fa fa-fw fa-globe"></i>Weibo</a>
-                  </span>
-                
-                  <span class="links-of-author-item">
-                    <a href="https://www.zhihu.com/people/acetylcholine/activities" target="_blank" title="Zhihu">
-                      
-                        <i class="fa fa-fw fa-globe"></i>Zhihu</a>
-                  </span>
-                
+        <div class="level is-size-7 is-uppercase">
+            <div class="level-start">
+                <div class="level-item">
+                    <span class="is-size-6 has-text-grey has-mr-7">#</span>
+                    <a class="has-link-grey -link" href="/tags/Android/">Android</a>, <a class="has-link-grey -link" href="/tags/逆向/">逆向</a>
+                </div>
             </div>
-          
-
-          
-          
-
-          
-          
-
-          
-
         </div>
-      </section>
-
-      
-
-      
-
-    </div>
-  </aside>
-
-
         
-      </div>
-    </main>
-
-    <footer id="footer" class="footer">
-      <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2018</span>
-  <span class="with-love">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder">GeekCat</span>
-
-  
+        
+        
+    </div>
 </div>
 
 
-  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+<div class="card">
+    <div class="card-content">
+        <h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3>
+        <div class="buttons is-centered">
+            
+                
+<a class="button is-success donate">
+    <span class="icon is-small">
+        <i class="fab fa-weixin"></i>
+    </span>
+    <span>微信</span>
+    <div class="qrcode"><img src="http://localhost:4000/images/wechat_qrcode.png" alt="微信"></div>
+</a>
+
+                
+        </div>
+    </div>
+</div>
 
 
 
-  <span class="post-meta-divider">|</span>
-
-
-
-  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
-
-
-
-
+<div class="card card-transparent">
+    <div class="level post-navigation is-flex-wrap is-mobile">
         
-
-
-
-
-
-
-
         
-      </div>
-    </footer>
+        <div class="level-end">
+            <a class="level level-item has-link-grey  article-nav-next" href="/2017/12/23/2017/构建自己的日志索引系统（序言）/">
+                <span class="level-item">构建自己的日志索引系统（序言）</span>
+                <i class="level-item fas fa-chevron-right"></i>
+            </a>
+        </div>
+        
+    </div>
+</div>
+
+
+</div>
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen  has-order-1 column-left ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <nav class="level">
+            <div class="level-item has-text-centered">
+                <div>
+                    <img class="image is-128x128 has-mb-6" src="/images/user.png" alt="GeekCat">
+                    
+                    <p class="is-size-4 is-block">
+                        GeekCat
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-block">
+                        参差多态是幸福的本源
+                    </p>
+                    
+                    
+                    <p class="is-size-6 is-flex is-flex-center has-text-grey">
+                        <i class="fas fa-map-marker-alt has-mr-7"></i>
+                        <span>深圳</span>
+                    </p>
+                    
+                </div>
+            </div>
+        </nav>
+        <nav class="level is-mobile">
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        文章
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        19
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        分类
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        8
+                    </p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered is-marginless">
+                <div>
+                    <p class="heading">
+                        标签
+                    </p>
+                    <p class="title has-text-weight-normal">
+                        22
+                    </p>
+                </div>
+            </div>
+        </nav>
+        <div class="level">
+            <a class="level-item button is-link is-rounded" href="https://github.com/guiyanakuang">
+                关注我</a>
+        </div>
+        
+        
+        <div class="level is-mobile">
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Github" href="https://github.com/guiyanakuang">
+                
+                <i class="fab fa-github"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Zhihu" href="https://www.zhihu.com/people/acetylcholine/activities">
+                
+                <i class="fab fa-zhihu"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="Weibo" href="https://weibo.com/u/1796278124">
+                
+                <i class="fab fa-weibo"></i>
+                
+            </a>
+            
+            <a class="level-item button is-white is-marginless" target="_blank" title="RSS" href="/">
+                
+                <i class="fas fa-rss"></i>
+                
+            </a>
+            
+        </div>
+        
+    </div>
+</div>
+    
+        
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                分类
+            </h3>
+            <ul class="menu-list">
+            <li>
+        <a class="level is-marginless" href="/categories/review/">
+            <span class="level-start">
+                <span class="level-item">review</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/广州/">
+            <span class="level-start">
+                <span class="level-item">广州</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">2</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/开发/">
+            <span class="level-start">
+                <span class="level-item">开发</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">2</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/思考/">
+            <span class="level-start">
+                <span class="level-item">思考</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/技术/">
+            <span class="level-start">
+                <span class="level-item">技术</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">10</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/江湖/">
+            <span class="level-start">
+                <span class="level-item">江湖</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/珠海/">
+            <span class="level-start">
+                <span class="level-item">珠海</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li><li>
+        <a class="level is-marginless" href="/categories/财大/">
+            <span class="level-start">
+                <span class="level-item">财大</span>
+            </span>
+            <span class="level-end">
+                <span class="level-item tag">1</span>
+            </span>
+        </a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            标签云
+        </h3>
+        <a href="/tags/AIO/" style="font-size: 10px;">AIO</a> <a href="/tags/ANTLR/" style="font-size: 15px;">ANTLR</a> <a href="/tags/Android/" style="font-size: 10px;">Android</a> <a href="/tags/Elasticsearch/" style="font-size: 15px;">Elasticsearch</a> <a href="/tags/Groovy/" style="font-size: 10px;">Groovy</a> <a href="/tags/Java/" style="font-size: 10px;">Java</a> <a href="/tags/Kafka/" style="font-size: 10px;">Kafka</a> <a href="/tags/Lucene/" style="font-size: 15px;">Lucene</a> <a href="/tags/PHP/" style="font-size: 10px;">PHP</a> <a href="/tags/svg/" style="font-size: 10px;">svg</a> <a href="/tags/前端/" style="font-size: 10px;">前端</a> <a href="/tags/异步/" style="font-size: 10px;">异步</a> <a href="/tags/感/" style="font-size: 20px;">感</a> <a href="/tags/技术/" style="font-size: 10px;">技术</a> <a href="/tags/日志索引/" style="font-size: 10px;">日志索引</a> <a href="/tags/暴雪哈希/" style="font-size: 10px;">暴雪哈希</a> <a href="/tags/源码/" style="font-size: 10px;">源码</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a> <a href="/tags/索引/" style="font-size: 10px;">索引</a> <a href="/tags/逆向/" style="font-size: 10px;">逆向</a> <a href="/tags/面经/" style="font-size: 10px;">面经</a> <a href="/tags/领域语言/" style="font-size: 15px;">领域语言</a>
+    </div>
+</div>
 
     
-      <div class="back-to-top">
-        <i class="fa fa-arrow-up"></i>
+    
+        <div class="column-right-shadow is-hidden-widescreen ">
         
-      </div>
+            
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2018/01/28/2018/Android逆向实践/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="Android逆向实践">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-01-28T05:58:00.000Z">2018-01-28</time></div>
+                    <a href="/2018/01/28/2018/Android逆向实践/" class="has-link-black-ter is-size-6">Android逆向实践</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="构建自己的日志索引系统（序言）">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-12-23T15:52:00.000Z">2017-12-23</time></div>
+                    <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="has-link-black-ter is-size-6">构建自己的日志索引系统（序言）</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/23/2017/台风过后一片狼藉/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="台风过后一片狼藉">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-23T13:53:24.000Z">2017-08-23</time></div>
+                    <a href="/2017/08/23/2017/台风过后一片狼藉/" class="has-link-black-ter is-size-6">台风过后一片狼藉</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/珠海/">珠海</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="前人挖坑后人被埋">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-20T12:08:00.000Z">2017-08-20</time></div>
+                    <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="has-link-black-ter is-size-6">前人挖坑后人被埋</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="怎样去最大化Elasticsearch索引性能(第一部分)">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-07-22T17:20:36.000Z">2017-07-23</time></div>
+                    <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="has-link-black-ter is-size-6">怎样去最大化Elasticsearch索引性能(第一部分)</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/08/">
+                <span class="level-start">
+                    <span class="level-item">八月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/06/">
+                <span class="level-start">
+                    <span class="level-item">六月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">3</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">4</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2015/11/">
+                <span class="level-start">
+                    <span class="level-item">十一月 2015</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+        
+            <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/AIO/">
+                        <span class="level-start">
+                            <span class="level-item">AIO</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/ANTLR/">
+                        <span class="level-start">
+                            <span class="level-item">ANTLR</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Android/">
+                        <span class="level-start">
+                            <span class="level-item">Android</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Elasticsearch/">
+                        <span class="level-start">
+                            <span class="level-item">Elasticsearch</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Groovy/">
+                        <span class="level-start">
+                            <span class="level-item">Groovy</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Java/">
+                        <span class="level-start">
+                            <span class="level-item">Java</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Kafka/">
+                        <span class="level-start">
+                            <span class="level-item">Kafka</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Lucene/">
+                        <span class="level-start">
+                            <span class="level-item">Lucene</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/PHP/">
+                        <span class="level-start">
+                            <span class="level-item">PHP</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/svg/">
+                        <span class="level-start">
+                            <span class="level-item">svg</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/前端/">
+                        <span class="level-start">
+                            <span class="level-item">前端</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/异步/">
+                        <span class="level-start">
+                            <span class="level-item">异步</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/感/">
+                        <span class="level-start">
+                            <span class="level-item">感</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">6</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/日志索引/">
+                        <span class="level-start">
+                            <span class="level-item">日志索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/暴雪哈希/">
+                        <span class="level-start">
+                            <span class="level-item">暴雪哈希</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/源码/">
+                        <span class="level-start">
+                            <span class="level-item">源码</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/爬虫/">
+                        <span class="level-start">
+                            <span class="level-item">爬虫</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/索引/">
+                        <span class="level-start">
+                            <span class="level-item">索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/逆向/">
+                        <span class="level-start">
+                            <span class="level-item">逆向</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/面经/">
+                        <span class="level-start">
+                            <span class="level-item">面经</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/领域语言/">
+                        <span class="level-start">
+                            <span class="level-item">领域语言</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+        
+        </div>
+    
+</div>
+
+                
+
+
+
+
+<div class="column is-4-tablet is-4-desktop is-3-widescreen is-hidden-touch is-hidden-desktop-only has-order-3 column-right ">
+    
+        
+<div class="card widget">
+    <div class="card-content">
+        <h3 class="menu-label">
+            最新文章
+        </h3>
+        
+        <article class="media">
+            
+            <a href="/2018/01/28/2018/Android逆向实践/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="Android逆向实践">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-01-28T05:58:00.000Z">2018-01-28</time></div>
+                    <a href="/2018/01/28/2018/Android逆向实践/" class="has-link-black-ter is-size-6">Android逆向实践</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="构建自己的日志索引系统（序言）">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-12-23T15:52:00.000Z">2017-12-23</time></div>
+                    <a href="/2017/12/23/2017/构建自己的日志索引系统（序言）/" class="has-link-black-ter is-size-6">构建自己的日志索引系统（序言）</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/23/2017/台风过后一片狼藉/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="台风过后一片狼藉">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-23T13:53:24.000Z">2017-08-23</time></div>
+                    <a href="/2017/08/23/2017/台风过后一片狼藉/" class="has-link-black-ter is-size-6">台风过后一片狼藉</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/珠海/">珠海</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="前人挖坑后人被埋">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-08-20T12:08:00.000Z">2017-08-20</time></div>
+                    <a href="/2017/08/20/2017/前人挖坑后人被埋/" class="has-link-black-ter is-size-6">前人挖坑后人被埋</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="media-left">
+                <p class="image is-64x64">
+                    <img class="thumbnail" src="/images/thumbnail.svg" alt="怎样去最大化Elasticsearch索引性能(第一部分)">
+                </p>
+            </a>
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-07-22T17:20:36.000Z">2017-07-23</time></div>
+                    <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="has-link-black-ter is-size-6">怎样去最大化Elasticsearch索引性能(第一部分)</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+    </div>
+</div>
+
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+        <h3 class="menu-label">
+            归档
+        </h3>
+        <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2018/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2018</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/08/">
+                <span class="level-start">
+                    <span class="level-item">八月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/06/">
+                <span class="level-start">
+                    <span class="level-item">六月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">2</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/04/">
+                <span class="level-start">
+                    <span class="level-item">四月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/03/">
+                <span class="level-start">
+                    <span class="level-item">三月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2017/01/">
+                <span class="level-start">
+                    <span class="level-item">一月 2017</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">3</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/12/">
+                <span class="level-start">
+                    <span class="level-item">十二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">4</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2016/02/">
+                <span class="level-start">
+                    <span class="level-item">二月 2016</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2015/11/">
+                <span class="level-start">
+                    <span class="level-item">十一月 2015</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
+        
+        </ul>
+        </div>
+    </div>
+</div>
+    
+        <div class="card widget">
+    <div class="card-content">
+        <div class="menu">
+            <h3 class="menu-label">
+                标签
+            </h3>
+            <ul class="menu-list">
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/AIO/">
+                        <span class="level-start">
+                            <span class="level-item">AIO</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/ANTLR/">
+                        <span class="level-start">
+                            <span class="level-item">ANTLR</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Android/">
+                        <span class="level-start">
+                            <span class="level-item">Android</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Elasticsearch/">
+                        <span class="level-start">
+                            <span class="level-item">Elasticsearch</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Groovy/">
+                        <span class="level-start">
+                            <span class="level-item">Groovy</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Java/">
+                        <span class="level-start">
+                            <span class="level-item">Java</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Kafka/">
+                        <span class="level-start">
+                            <span class="level-item">Kafka</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/Lucene/">
+                        <span class="level-start">
+                            <span class="level-item">Lucene</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/PHP/">
+                        <span class="level-start">
+                            <span class="level-item">PHP</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/svg/">
+                        <span class="level-start">
+                            <span class="level-item">svg</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/前端/">
+                        <span class="level-start">
+                            <span class="level-item">前端</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/异步/">
+                        <span class="level-start">
+                            <span class="level-item">异步</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/感/">
+                        <span class="level-start">
+                            <span class="level-item">感</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">6</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/技术/">
+                        <span class="level-start">
+                            <span class="level-item">技术</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/日志索引/">
+                        <span class="level-start">
+                            <span class="level-item">日志索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/暴雪哈希/">
+                        <span class="level-start">
+                            <span class="level-item">暴雪哈希</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/源码/">
+                        <span class="level-start">
+                            <span class="level-item">源码</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/爬虫/">
+                        <span class="level-start">
+                            <span class="level-item">爬虫</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/索引/">
+                        <span class="level-start">
+                            <span class="level-item">索引</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/逆向/">
+                        <span class="level-start">
+                            <span class="level-item">逆向</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/面经/">
+                        <span class="level-start">
+                            <span class="level-item">面经</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">1</span>
+                        </span>
+                    </a>
+                </li>
+                
+                <li>
+                    <a class="level is-marginless" href="/tags/领域语言/">
+                        <span class="level-start">
+                            <span class="level-item">领域语言</span>
+                        </span>
+                        <span class="level-end">
+                            <span class="level-item tag">2</span>
+                        </span>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+    
+    
+</div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="footer">
+    <div class="container">
+        <div class="level">
+            <div class="level-start has-text-centered-mobile">
+                <a class="footer-logo is-block has-mb-6" href="/">
+                
+                    <img src="/images/user.png" alt="Android逆向实践" height="28">
+                
+                </a>
+                <p class="is-size-7">
+                &copy; 2019 GeekCat&nbsp;
+                Powered by <a href="http://hexo.io/" target="_blank">Hexo</a> & <a href="http://github.com/ppoffice/hexo-theme-icarus">Icarus</a>
+                </p>
+            </div>
+            <div class="level-end">
+            
+                <div class="field has-addons is-flex-center-mobile has-mt-5-mobile is-flex-wrap is-flex-middle">
+                
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Creative Commons" href="https://creativecommons.org/">
+                        
+                        <i class="fab fa-creative-commons"></i>
+                        
+                    </a>
+                </p>
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Attribution 4.0 International" href="https://creativecommons.org/licenses/by/4.0/">
+                        
+                        <i class="fab fa-creative-commons-by"></i>
+                        
+                    </a>
+                </p>
+                
+                <p class="control">
+                    <a class="button is-white is-large" target="_blank" title="Download on GitHub" href="http://github.com/ppoffice/hexo-theme-icarus">
+                        
+                        <i class="fab fa-github"></i>
+                        
+                    </a>
+                </p>
+                
+                </div>
+            
+            </div>
+        </div>
+    </div>
+</footer>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.22.2/min/moment-with-locales.min.js"></script>
+<script>moment.locale("zh-CN");</script>
+
+
+    
+    
+    
+    <script src="/js/animation.js"></script>
     
 
     
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/lightgallery@1.6.8/dist/js/lightgallery.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/justifiedGallery@3.7.0/dist/js/jquery.justifiedGallery.min.js" defer></script>
+    <script src="/js/gallery.js" defer></script>
+    
 
-  </div>
+    
+    
 
-  
-
-<script type="text/javascript">
-  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
-    window.Promise = null;
-  }
+<div id="outdated">
+    <h6>Your browser is out-of-date!</h6>
+    <p>Update your browser to view this website correctly. <a id="btnUpdateBrowser" href="http://outdatedbrowser.com/">Update
+            my browser now </a></p>
+    <p class="last"><a href="#" id="btnCloseUpdateBrowser" title="Close">&times;</a></p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/outdatedbrowser@1.1.5/outdatedbrowser/outdatedbrowser.min.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        outdatedBrowser({
+            bgColor: '#f25648',
+            color: '#ffffff',
+            lowerThan: 'flex'
+        });
+    });
 </script>
 
 
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
-  
-
-
-  
-
-
-  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
-
-
-
-  
-  
-
-
-  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
-
-
-
-  
-  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
-<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
-
-
-
-  
-
-
-  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
-
-
-
-  
-
-
-  
-
-
-
-
-	
-
-
-
-
-
-  
-
-
-
-
-
-  
-
-
-
-
-
-
-
-<!-- LOCAL: You can save these files to your site and update links -->
     
-        
-        <link rel="stylesheet" href="https://aimingoo.github.io/gitmint/style/default.css">
-        <script src="https://aimingoo.github.io/gitmint/dist/gitmint.browser.js"></script>
     
-<!-- END LOCAL -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@2.7.5/unpacked/MathJax.js?config=TeX-MML-AM_CHTML" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    MathJax.Hub.Config({
+        'HTML-CSS': {matchFontHeight: false},
+        SVG: {matchFontHeight: false},
+        CommonHTML: {matchFontHeight: false}
+    });
+});
+</script>
 
+    
+    
+
+<a id="back-to-top" title="回到顶端" href="javascript:;">
+    <i class="fas fa-chevron-up"></i>
+</a>
+<script src="/js/back-to-top.js" defer></script>
+
+
+    
     
 
     
-      <script type="text/javascript">
-      function renderGitment(){
-        var gitment = new Gitmint({
-            id: window.location.pathname, 
-            owner: 'guiyanakuang',
-            repo: 'guiyanakuang.github.io',
-            
-            lang: "" || navigator.language || navigator.systemLanguage || navigator.userLanguage,
-            
-            oauth: {
-            
-            
-                client_secret: 'b2ecdf5b33a642fff2992946222a7fedaf8c5ead',
-            
-                client_id: '3d20fb6ae7049de0d2d0'
-            }});
-        gitment.render('gitment-container');
-      }
+    
+    
+    
 
-      
-      renderGitment();
-      
-      </script>
+    
+    
+    
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.4/dist/clipboard.min.js" defer></script>
+    <script src="/js/clipboard.js" defer></script>
+    
+
     
 
 
+<script src="/js/main.js" defer></script>
 
-
-
-
-
-  
-
-
-
-
-
-  
-
-  
-
-  
-
-  
-  
-
-  
-
-  
-
-  
-
+    
+    <div class="searchbox ins-search">
+    <div class="searchbox-container ins-search-container">
+        <div class="searchbox-input-wrapper">
+            <input type="text" class="searchbox-input ins-search-input" placeholder="想要查找什么...">
+            <span class="searchbox-close ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="searchbox-result-wrapper ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+    (function (window) {
+        var INSIGHT_CONFIG = {
+            TRANSLATION: {
+                POSTS: '文章',
+                PAGES: '页面',
+                CATEGORIES: '分类',
+                TAGS: '标签',
+                UNTITLED: '(无标题)',
+            },
+            CONTENT_URL: '/content.json',
+        };
+        window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+    })(window);
+</script>
+<script src="/js/insight.js" defer></script>
+<link rel="stylesheet" href="/css/search.css">
+<link rel="stylesheet" href="/css/insight.css">
+    
 </body>
 </html>

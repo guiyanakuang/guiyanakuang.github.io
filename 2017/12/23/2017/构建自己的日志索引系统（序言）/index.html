@@ -246,19 +246,18 @@
         <h3 class="title is-5 has-text-weight-normal">评论</h3>
         
 <div id="comment-container"></div>
-<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
-<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.4.1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1.4.1/dist/gitalk.min.js"></script>
 <script>
-	var gitment = new Gitment({
-		id: '2017/12/23/2017/构建自己的日志索引系统（序言）/',
-		owner: 'guiyanakuang',
-		repo: 'guiyanakuang.github.io',
-		oauth: {
-			client_id: '3d20fb6ae7049de0d2d0',
-			client_secret: 'b2ecdf5b33a642fff2992946222a7fedaf8c5ead',
-		},
-	})
-	gitment.render('comment-container')
+    var gitalk = new Gitalk({
+        clientID: '3d20fb6ae7049de0d2d0',
+        clientSecret: 'b2ecdf5b33a642fff2992946222a7fedaf8c5ead',
+        id: '1c0d9e364e206b8fa57778564d0f5274',
+        repo: 'guiyanakuang.github.io',
+        owner: 'guiyanakuang',
+        admin: "guiyanakuang"
+    })
+    gitalk.render('comment-container')
 </script>
 
     </div>

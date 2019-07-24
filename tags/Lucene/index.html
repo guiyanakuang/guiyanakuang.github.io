@@ -158,6 +158,120 @@ var _hmt = _hmt || [];
         
         <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
             <div class="level-left">
+                <time class="level-item has-text-grey" datetime="2019-07-05T06:18:00.000Z">2019-07-05</time>
+                
+                <div class="level-item">
+                <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                </div>
+                
+                
+                <span class="level-item has-text-grey">
+                    
+                    
+                    15 分钟 读完 (大约 2244 个字)
+                </span>
+                
+            </div>
+        </div>
+        
+        <h1 class="title is-size-3 is-size-4-mobile has-text-weight-normal">
+            
+                <a class="has-link-black-ter" href="/2019/07/05/2019/Lucene数值索引原理/">Android逆向实践</a>
+            
+        </h1>
+        <div class="content">
+            <p>在讲解 Lucene 数值索引原理之前，我们先回顾一下 Lucene 核心数据结构：倒排索引</p>
+<h3 id="倒排索引"><a href="#倒排索引" class="headerlink" title="倒排索引"></a>倒排索引</h3><p><img src="http://geek-cat.me/images/1562293246_96.png" alt="示例"><br>如示例我们有三篇文档，分为两个字段进行索引，使用各个字段的 Term 来关联文档列表 Posting List，当我们查询 <code>sex:男 And age:18</code> 的时候，[1, 3] ^ [3] 进行交集，就很快人定位到命中的文档 id。</p>
+<p>然而倒排索引并没有这个简单，当你索引的 Term 非常多，整个 Term Dictionary 在内存里已经放不下时，不得不使用磁盘存储，使用磁盘存储就需要面对一个问题，如何快速的定位到查询的 Term 对应的 Posting List，于是就有了 Term Index。</p>
+<p><img src="http://geek-cat.me/images/1562293028_66.png" alt="倒排索引"><br>Term Index 通过前缀树的形式加载到内存，来加速查找 Terme Dictionary，定位对应的 Posting List。实际上 Lucene 使用了 FST (Finite State Transducers) 的数据结构来代替前缀树，对前缀树进行了很好的压缩，这样内存可以轻松缓存下整个 Term Index。</p>
+<h3 id="数值类索引——前世"><a href="#数值类索引——前世" class="headerlink" title="数值类索引——前世"></a>数值类索引——前世</h3><p>在 Lucene 6.0 之前数值类索引依然需要使用到 FST，数值也会被当做 Term 进行存储，我们简化一下思考数值类如何去利用前缀树进行索引呢？比如我们要索引 [1, 10, 50, 3]</p>
+<p>方案一：直接转化为字符串 [“1”, “10”, “50”, “3”] 进行索引存储</p>
+<p>这样虽然能马上利用到前缀树索引，但是这样构造出来的前缀树无法进行范围查询，试想一下如果我们查询 <code>&quot;1&quot; &lt; x &lt; &quot;4&quot;</code>，10 也会落在命中的范围内。</p>
+<p>方案二：转化为字符串后前面补0，转化为等长字符串再进行索引 [“0001”, “0010”, “0050”, “0003”]。</p>
+<p>这样我们查询<code>&quot;1&quot; &lt; x &lt; &quot;4&quot;</code>可以转变为 <code>&quot;0001&quot; &lt; x &lt; &quot;0004&quot;</code>，不会错误的将10查出来，但是带来了另一个问题，存储成本增加，一旦确定字符串长度，更长的数值将无法写入。</p>
+<p>Lucene 6.0 之前的解决方案是将数值按步长掩码（shift）转化为多个 Term 进行索引</p>
+<p><img src="http://geek-cat.me/images/1562296255_80.png" alt="256 按步长掩码转化为 Term"><br><img src="http://geek-cat.me/images/1562303349_84.png" alt="longToPrefixCoded 算法"><br>具体的转化算法，涉及到数值表示的技巧，本文不进行详细的描述，这里按照 16 位一个步长，将一个Long型的 256 转化为4个 Term，分别表示 256 ，[0 -2^16-1]，[0 -2^32-1]，[0 -2^48-1]，写入FST。</p>
+<p><img src="http://geek-cat.me/images/1562296976_7.png" alt="点查与范围查询"><br>256 查询使用同样的算法转为为 Term1，直接命中对应的 Posting List，范围查询 [0 - 65536] ，先进行步长的适配，发现[0 - 65536] 等价于 [0 - 2^16-1] 与 2^16 两个查询，转为Term2 与 Term5 再对 FST 进行查找。</p>
+<p>这样既保证了点查与范围查询，同时对数据进行了压缩。</p>
+<h3 id="数值类索引——今生"><a href="#数值类索引——今生" class="headerlink" title="数值类索引——今生"></a>数值类索引——今生</h3><p>从 Lucene 6.0 版本开始，引入针对数值类型，引入了新的数据结构 Block KDB-Tree（Block K-Dimension Balanced Tree），用于优化 Lucene 中范围查询的性能。由于这一索引结构最初用于地理坐标场景，因此被命名为 Point 索引。</p>
+<p><img src="http://geek-cat.me/images/1562297423_40.png" alt="二维坐标存储 KDB-Tree 示例"><br>我们发现到了 Lucene 6.0 版本数值索引已经抛弃了倒排结构回归使用树的结构，初期 Lucene 数值类索引完全复用字符的索引方式避免引入多种数据结构，但是性能原因还是证明数值类存储还是更适合使用树形结构存储，通过技巧将数值转为了多个范围 Term 方法加大了索引存储空间，范围 Term 边缘的数值，每一个都需要转化成单独的 Term 进行查询效率下降，这些方面在 Block KDB-Tree 上都得到了很好的解决。</p>
+<p><img src="http://geek-cat.me/images/1562297743_99.png" alt="一维数值的写入"><br>新数值类型支持多维数据的写入，这里先看一下一维数据的写入情况。数据写入后保存到内存池里，当 Lucene 触发 flush 动作时，将无序内存进行排序均匀划分叶块，保证每个叶块小于1024个数值，通过叶块再往上构建树干。</p>
+<p><img src="http://geek-cat.me/images/1562298088_65.png" alt="多维数据的写入"><br>对于多维数据的写入，跟一维数据相反，先构建树根，再往下构建树干叶子，第一步选取第一个划分的维度，这里简单粗暴的选择(max - min)最大的维度首先进行 partition（如果使用方差来确定最分散的维度可能会消耗大量CPU时间，降低写入性能），partition 的过程会计算出中值将原来的无序内存划分为左右两块，递归下去选择下一个维度，最后保证叶块数量小于 1024 结束。</p>
+<h4 id="Lucene-内的排序算法"><a href="#Lucene-内的排序算法" class="headerlink" title="Lucene 内的排序算法"></a>Lucene 内的排序算法</h4><p>partition 与 sort 是影响写入性能的关键，Lucene 6.0 使用基数排序与内省排序相结合的方式来代替原内省排序的实现。</p>
+<p><img src="http://geek-cat.me/images/1562298871_37.png" alt="内省排序"><br>内省排序是快排，堆排，插入排序（有的内省算法只包含两种）三者的结合体。我们知道快排是在递归寻找一个主元将数据分为两部分，随着递归的下降，这种划分提供的排序效率越来越低，遇到已经部分有序的序列可能会下降到 O(n^2) 的情况，这时候堆排序就是一个很好的补充，堆排在任何情况下都能保证 O(nlogn) 的时间复杂度，随着排的进行，每个子序列都快接近最后的完成状态，这个时候切换到插入排序，对于几乎已经排好序的序列，插入排序可以达到 O(n) 的时间复杂度。（推荐阅读 <a href="http://mindhacks.cn/2008/06/13/why-is-quicksort-so-quick/" target="_blank" rel="noopener">http://mindhacks.cn/2008/06/13/why-is-quicksort-so-quick/</a> ，从信息论的角度分析了快排排序过程中效率的变化 ）</p>
+<p><img src="http://geek-cat.me/images/1562298565_65.png" alt="MSB基数排序"><br>这里先通过一个例子阐述基数排序的原理。按照数值高低位分桶的顺序分为 LSB、MSB 两种基数排序，以 73, 22, 93, 43, 55, 14, 28, 65, 39, 81, 26 MSB举例，如图，先试用十位分桶写入数值，桶内如果有多个数值，则降低分桶位（十位到个位）递归进行下一次分桶。两次分桶后排序结束，只需要从最上层的桶按顺序取出数值即可。</p>
+<p><img src="http://geek-cat.me/images/1562299183_24.png" alt="Lucene 6.0 Point 的排序调用流程图"><br>Lucene 6.0 Point 的排序，先通过递归深度和排序区间进行判断，递归深度大于8或者区间小于100的转为内省排序，否则进行MSB的基数排序。由于基数排序相同桶的高位比特是相同的，在内省排序中可以借助这一点减少排序byte位数。</p>
+<p>基数排序对于 Partition 也有非常好的加速效果，通过每次分桶后每个桶内数值的数量，就可以快速定位到中值所在桶的位置，只要针对所在桶进行递归，就能快速查找到中值。<br><a href="https://issues.apache.org/jira/browse/LUCENE-7396" target="_blank" rel="noopener">https://issues.apache.org/jira/browse/LUCENE-7396</a><br><img src="http://geek-cat.me/images/1562299242_87.png" alt="加入基数排序的效果"><br>加入基数排序的效果，提升了13%的写入性能</p>
+<p>###Lucene 索引测试报告</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">对比项</th>
+<th style="text-align:center">Point</th>
+<th style="text-align:center">Numbric Store Yes</th>
+<th style="text-align:center">Numbric Store No</th>
+<th style="text-align:center">String Store YES</th>
+<th style="text-align:center">String Store NO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">索引文件大小</td>
+<td style="text-align:center">61.3 M</td>
+<td style="text-align:center">229.7 M</td>
+<td style="text-align:center">151.9 M</td>
+<td style="text-align:center">293.1 M</td>
+<td style="text-align:center">129.5 M</td>
+</tr>
+<tr>
+<td style="text-align:center">Lucene接口返回的内存消耗</td>
+<td style="text-align:center">11.74 M</td>
+<td style="text-align:center">77.97 M</td>
+<td style="text-align:center">77.97 M</td>
+<td style="text-align:center">51.34 M</td>
+<td style="text-align:center">51.34 M</td>
+</tr>
+<tr>
+<td style="text-align:center">写入耗时</td>
+<td style="text-align:center">11042 ms</td>
+<td style="text-align:center">55698 ms</td>
+<td style="text-align:center">54663 ms</td>
+<td style="text-align:center">35838 ms</td>
+<td style="text-align:center">31853 ms</td>
+</tr>
+<tr>
+<td style="text-align:center">千次平均范围count查询耗时</td>
+<td style="text-align:center">22 ms</td>
+<td style="text-align:center">39 ms</td>
+<td style="text-align:center">37 ms</td>
+<td style="text-align:center">144 ms</td>
+<td style="text-align:center">142 ms</td>
+</tr>
+</tbody>
+</table>
+<p><img src="http://geek-cat.me/images/1562302313_79.png" alt="Point 与 Numbric Store YES 写入概况"></p>
+<h4 id="参考文章"><a href="#参考文章" class="headerlink" title="参考文章"></a>参考文章</h4><p>1、<a href="https://cloud.tencent.com/developer/article/1366832" title="Elasitcsearch 底层系列 Lucene 内核解析之Point索引" target="_blank" rel="noopener">Elasitcsearch 底层系列 Lucene 内核解析之Point索引</a><br>2、<a href="https://www.elastic.co/cn/blog/better-query-planning-for-range-queries-in-elasticsearch" title="Better Query Planning for Range Queries in Elasticsearch" target="_blank" rel="noopener">Better Query Planning for Range Queries in Elasticsearch</a><br>3、<a href="https://www.elastic.co/cn/blog/space-savings-a-lesser-known-benefit-of-index-sorting-in-elasticsearch" title="节省空间：关于 Elasticsearch 中的索引排序，很多人不知道的一项优势" target="_blank" rel="noopener">节省空间：关于 Elasticsearch 中的索引排序，很多人不知道的一项优势</a><br>4、<a href="http://mindhacks.cn/2008/06/13/why-is-quicksort-so-quick/" title="数学之美番外篇：快排为什么那样快" target="_blank" rel="noopener">数学之美番外篇：快排为什么那样快</a></p>
+
+        </div>
+        
+        
+        
+    </div>
+</div>
+
+
+
+
+
+
+
+
+    <div class="card">
+    
+    <div class="card-content article ">
+        
+        <div class="level article-meta is-size-7 is-uppercase is-mobile is-overflow-x-auto">
+            <div class="level-left">
                 <time class="level-item has-text-grey" datetime="2017-12-23T15:52:00.000Z">2017-12-23</time>
                 
                 <div class="level-item">
@@ -320,7 +434,7 @@ var _hmt = _hmt || [];
                         文章
                     </p>
                     <p class="title has-text-weight-normal">
-                        19
+                        20
                     </p>
                 </div>
             </div>
@@ -430,7 +544,7 @@ var _hmt = _hmt || [];
                 <span class="level-item">技术</span>
             </span>
             <span class="level-end">
-                <span class="level-item tag">10</span>
+                <span class="level-item tag">11</span>
             </span>
         </a></li><li>
         <a class="level is-marginless" href="/categories/江湖/">
@@ -468,7 +582,7 @@ var _hmt = _hmt || [];
         <h3 class="menu-label">
             标签云
         </h3>
-        <a href="/tags/AIO/" style="font-size: 10px;">AIO</a> <a href="/tags/ANTLR/" style="font-size: 15px;">ANTLR</a> <a href="/tags/Android/" style="font-size: 10px;">Android</a> <a href="/tags/Elasticsearch/" style="font-size: 15px;">Elasticsearch</a> <a href="/tags/Groovy/" style="font-size: 10px;">Groovy</a> <a href="/tags/Java/" style="font-size: 10px;">Java</a> <a href="/tags/Kafka/" style="font-size: 10px;">Kafka</a> <a href="/tags/Lucene/" style="font-size: 15px;">Lucene</a> <a href="/tags/PHP/" style="font-size: 10px;">PHP</a> <a href="/tags/svg/" style="font-size: 10px;">svg</a> <a href="/tags/前端/" style="font-size: 10px;">前端</a> <a href="/tags/异步/" style="font-size: 10px;">异步</a> <a href="/tags/感/" style="font-size: 20px;">感</a> <a href="/tags/技术/" style="font-size: 10px;">技术</a> <a href="/tags/日志索引/" style="font-size: 10px;">日志索引</a> <a href="/tags/暴雪哈希/" style="font-size: 10px;">暴雪哈希</a> <a href="/tags/源码/" style="font-size: 10px;">源码</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a> <a href="/tags/索引/" style="font-size: 10px;">索引</a> <a href="/tags/逆向/" style="font-size: 10px;">逆向</a> <a href="/tags/面经/" style="font-size: 10px;">面经</a> <a href="/tags/领域语言/" style="font-size: 15px;">领域语言</a>
+        <a href="/tags/AIO/" style="font-size: 10px;">AIO</a> <a href="/tags/ANTLR/" style="font-size: 13.33px;">ANTLR</a> <a href="/tags/Android/" style="font-size: 10px;">Android</a> <a href="/tags/Elasticsearch/" style="font-size: 13.33px;">Elasticsearch</a> <a href="/tags/Groovy/" style="font-size: 10px;">Groovy</a> <a href="/tags/Java/" style="font-size: 10px;">Java</a> <a href="/tags/Kafka/" style="font-size: 10px;">Kafka</a> <a href="/tags/Lucene/" style="font-size: 16.67px;">Lucene</a> <a href="/tags/PHP/" style="font-size: 10px;">PHP</a> <a href="/tags/svg/" style="font-size: 10px;">svg</a> <a href="/tags/前端/" style="font-size: 10px;">前端</a> <a href="/tags/异步/" style="font-size: 10px;">异步</a> <a href="/tags/感/" style="font-size: 20px;">感</a> <a href="/tags/技术/" style="font-size: 10px;">技术</a> <a href="/tags/日志索引/" style="font-size: 10px;">日志索引</a> <a href="/tags/暴雪哈希/" style="font-size: 10px;">暴雪哈希</a> <a href="/tags/源码/" style="font-size: 10px;">源码</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a> <a href="/tags/索引/" style="font-size: 10px;">索引</a> <a href="/tags/逆向/" style="font-size: 10px;">逆向</a> <a href="/tags/面经/" style="font-size: 10px;">面经</a> <a href="/tags/领域语言/" style="font-size: 13.33px;">领域语言</a>
     </div>
 </div>
 
@@ -482,6 +596,19 @@ var _hmt = _hmt || [];
         <h3 class="menu-label">
             最新文章
         </h3>
+        
+        <article class="media">
+            
+            <div class="media-content">
+                <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-07-05T06:18:00.000Z">2019-07-05</time></div>
+                    <a href="/2019/07/05/2019/Lucene数值索引原理/" class="has-link-black-ter is-size-6">Android逆向实践</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
         
         <article class="media">
             
@@ -535,19 +662,6 @@ var _hmt = _hmt || [];
             </div>
         </article>
         
-        <article class="media">
-            
-            <div class="media-content">
-                <div class="content">
-                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-07-22T17:20:36.000Z">2017-07-23</time></div>
-                    <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="has-link-black-ter is-size-6">怎样去最大化Elasticsearch索引性能(第一部分)</a>
-                    <p class="is-size-7 is-uppercase">
-                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
-                    </p>
-                </div>
-            </div>
-        </article>
-        
     </div>
 </div>
 
@@ -559,6 +673,17 @@ var _hmt = _hmt || [];
             归档
         </h3>
         <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
         
         <li>
             <a class="level is-marginless" href="/archives/2018/01/">
@@ -788,7 +913,7 @@ var _hmt = _hmt || [];
                             <span class="level-item">Lucene</span>
                         </span>
                         <span class="level-end">
-                            <span class="level-item tag">2</span>
+                            <span class="level-item tag">3</span>
                         </span>
                     </a>
                 </li>
@@ -975,6 +1100,19 @@ var _hmt = _hmt || [];
             
             <div class="media-content">
                 <div class="content">
+                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2019-07-05T06:18:00.000Z">2019-07-05</time></div>
+                    <a href="/2019/07/05/2019/Lucene数值索引原理/" class="has-link-black-ter is-size-6">Android逆向实践</a>
+                    <p class="is-size-7 is-uppercase">
+                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
+                    </p>
+                </div>
+            </div>
+        </article>
+        
+        <article class="media">
+            
+            <div class="media-content">
+                <div class="content">
                     <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2018-01-28T05:58:00.000Z">2018-01-28</time></div>
                     <a href="/2018/01/28/2018/Android逆向实践/" class="has-link-black-ter is-size-6">Android逆向实践</a>
                     <p class="is-size-7 is-uppercase">
@@ -1023,19 +1161,6 @@ var _hmt = _hmt || [];
             </div>
         </article>
         
-        <article class="media">
-            
-            <div class="media-content">
-                <div class="content">
-                    <div><time class="has-text-grey is-size-7 is-uppercase" datetime="2017-07-22T17:20:36.000Z">2017-07-23</time></div>
-                    <a href="/2017/07/23/2017/怎样去最大化Elasticsearch索引性能(第一部分)/" class="has-link-black-ter is-size-6">怎样去最大化Elasticsearch索引性能(第一部分)</a>
-                    <p class="is-size-7 is-uppercase">
-                        <a class="has-link-grey -link" href="/categories/技术/">技术</a>
-                    </p>
-                </div>
-            </div>
-        </article>
-        
     </div>
 </div>
 
@@ -1047,6 +1172,17 @@ var _hmt = _hmt || [];
             归档
         </h3>
         <ul class="menu-list">
+        
+        <li>
+            <a class="level is-marginless" href="/archives/2019/07/">
+                <span class="level-start">
+                    <span class="level-item">七月 2019</span>
+                </span>
+                <span class="level-end">
+                    <span class="level-item tag">1</span>
+                </span>
+            </a>
+        </li>
         
         <li>
             <a class="level is-marginless" href="/archives/2018/01/">
@@ -1276,7 +1412,7 @@ var _hmt = _hmt || [];
                             <span class="level-item">Lucene</span>
                         </span>
                         <span class="level-end">
-                            <span class="level-item tag">2</span>
+                            <span class="level-item tag">3</span>
                         </span>
                     </a>
                 </li>
